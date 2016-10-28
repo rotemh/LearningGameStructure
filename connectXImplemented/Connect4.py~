@@ -47,7 +47,7 @@ def runGame(player1, player2, gameNum = 0, saveImages=True):
 	for i in xrange(gv.BoardHeight * gv.BoardWidth):
 		#Make a move
 		column = turn.getMove(board)
-		makeMove(board, turn.token.name, column)
+		action = makeMove(board, turn.token.name, column)
 
 		#save image of board
 		if saveImages:
@@ -135,7 +135,9 @@ def makeMove(board, token, column):
 	lowest = getLowestEmptySpace(board, column)
 	if lowest is not None:
 		board[column][lowest] = token
-	return
+		return {'x': column, 'y': lowest, 'color':token}
+	else:
+		return {'x': None, 'y': None, 'color': Empty}
 
 def getLowestEmptySpace(board, column):
 	'''
@@ -159,7 +161,7 @@ def getNewBoard():
 	return board
 
 #Image generation and manipulation
-def createBoardImage(board):
+def createBoardImage(board, latestAction=None):
 	window.fill(gv.BgColor)
 
 	spaceRect = pygame.Rect(0, 0, gv.SpaceSize, gv.SpaceSize)
@@ -170,6 +172,11 @@ def createBoardImage(board):
 			if tokens.isPlayerToken(board[x][y]):
 				img = tokens.getImage(board[x][y])
 				window.blit(img, spaceRect)
+
+	# draw the extra token
+	if latestAction != None:
+		img = tokens.getImage(latestAction['color'])
+		window.blit(img, (latestAction['x'], latestAction['y'], gv.SpaceSize, gv.SpaceSize))
 
 	# draw board over the tokens
 	for x in range(gv.BoardWidth):
