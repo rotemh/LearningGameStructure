@@ -5,6 +5,10 @@ import random
 
 from pprint import pprint
 
+#Image Visualization files
+from pygame.locals import *
+import pygame
+
 
 class Board(object):
     """
@@ -93,6 +97,23 @@ class ConnectFourBoard(Board):
     NUM_COLS = 7
     NUM_ROWS = 6
 
+    #Image Visualization Parameters:
+    SPACESIZE = 100 #size of the tokens and board spaces in pixels
+    WINDOWWIDTH  = 1000 # in pixels
+    WINDOWHEIGHT = 960 # pixels
+    XMARGIN = int((WINDOWWIDTH - NUM_COLS * SPACESIZE) / 2)
+    YMARGIN = int((WINDOWHEIGHT - NUM_ROWS * SPACESIZE) / 2)
+
+    #Colors
+    WHITE = (255, 255, 255)
+    BGCOLOR = WHITE
+
+    #Token Images
+    RED_IMG = pygame.image.load('4row_red.png')
+    BLACK_IMG = pygame.image.load('4row_black.png')
+    BOARD_IMG = pygame.image.load('4row_board.png')
+
+
     def __init__(self, state=None, turn=None):
         """
         params:
@@ -108,6 +129,12 @@ class ConnectFourBoard(Board):
             self.turn = turn
 
         self.last_move = None
+
+
+        #Visualize as Image Init
+        pygame.init()
+        self.window = pygame.display.set_mode((ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT))
+        pygame.display.set_caption('Connect 4')
         
     def get_legal_actions(self):
         actions = set()
@@ -252,6 +279,34 @@ class ConnectFourBoard(Board):
             line = ' '.join(line)
             print '{} '.format(row) + line
         print '  ' + ' '.join([str(col) for col in xrange(ConnectFourBoard.NUM_COLS)])
+        #self.visualize_image('test')
+
+    def visualize_image(self, imgName, save=True):
+        '''
+        uses pygame to visualize image and saves it if true.
+        '''
+        self.window.fill(ConnectFourBoard.BGCOLOR)
+
+        spaceRect = pygame.Rect(0, 0, ConnectFourBoard.SPACESIZE, ConnectFourBoard.SPACESIZE)
+        getSpaceRectCoords = lambda x, y: (ConnectFourBoard.XMARGIN + (x * ConnectFourBoard.SPACESIZE), 
+            (y * ConnectFourBoard.SPACESIZE))
+        for x in xrange(ConnectFourBoard.NUM_COLS):
+            for y in reversed(xrange(ConnectFourBoard.NUM_ROWS)):
+                spaceRect.topleft = getSpaceRectCoords(x, ConnectFourBoard.NUM_ROWS - y)
+                if self.state[x][y] == ConnectFourBoard.RED:
+                    self.window.blit(ConnectFourBoard.RED_IMG, spaceRect)
+                elif self.state[x][y] == ConnectFourBoard.BLACK:
+                    self.window.blit(ConnectFourBoard.BLACK_IMG, spaceRect)
+                self.window.blit(ConnectFourBoard.BOARD_IMG, spaceRect)
+
+        if save:
+            pygame.display.update()
+            completeImgName = imgName + ".jpeg"
+            pygame.image.save(self.window, completeImgName)
+
+        return
+
+
 
     def json_visualize(self):
         return {
