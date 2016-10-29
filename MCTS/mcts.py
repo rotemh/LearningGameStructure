@@ -146,3 +146,37 @@ def backup(node, reward_vector):
         node.q += reward_vector[node.get_parent().get_player_id()]
         node = node.get_parent()
     node.visit()
+
+###########################################################
+# save all state-action pair images in an MCTS tree
+# Input: a root of a tree that we want to image
+#        the directory+prefix for all this game's trees
+# Output: nothing (though lots of things will be externally
+#       saved)
+###########################################################
+class Counter:
+    # THIS IS VERY VERY NOT THREAD SAFE
+    def __init__(self):
+        self.count = 0
+
+    def increment(self):
+        self.count+=1
+
+    def get_count(self):
+        return self.count
+
+def save_all_image_pairs_in_tree(root, prefix, counter=None):
+    node = root
+    if counter ==None:
+        counter = Counter()
+    while len(node.get_children())!=0:
+        player_id = node.board.current_player_id()
+        for child in node.get_children():
+            counter.increment()
+            child.save_visual_state_action_pair(prefix + "_board_" + str(board_counter) + "_player_" + str(player_id))
+            child.save_all_image_pairs_in_tree(prefix, counter)
+
+
+
+
+

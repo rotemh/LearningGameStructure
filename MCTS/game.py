@@ -290,6 +290,9 @@ class Action(object):
     def __hash__(self):
         raise NotImplemented
 
+    def string_abbreviation(self):
+        raise NotImplemented
+
 
 class ConnectFourAction(Action):
     """
@@ -331,6 +334,9 @@ class ConnectFourAction(Action):
 
     def __repr__(self):
         return 'ConnectFourAction(color={},col={},row={})'.format(self.color,self.col,self.row)
+
+    def string_abbreviation(self):
+        return self.color + str(self.col)
 
 
 class Player(object):
@@ -532,6 +538,24 @@ class Node(object):
         exploration_value = c * math.sqrt(2 * math.log(self.parent.num_visits) / self.num_visits)
         
         return exploitation_value + exploration_value
+
+    def save_visual_state_action_pair(self, file_prefix):
+        """
+        Return the action taken to reach this state. Also
+        save two images, one of the previous state's board,
+        and one of the current state's board.
+        The formats for their names are 
+        file_prefix_before and file_prefix_after_[integer signature of action]
+
+        params:
+        file_prefix - the prefix for the files that will contain the boards' before and after representations
+        """
+
+        if self.parent == None:
+            raise IllegalArgumentError
+        self.parent.board.visualize(file_prefix + "_before")
+        self.board.visualize(filename + "_after_" + self.action.string_abbreviation())
+        return self.action
 
 
 class Simulation(object):
