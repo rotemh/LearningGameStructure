@@ -279,7 +279,7 @@ class ConnectFourBoard(Board):
             line = ' '.join(line)
             print '{} '.format(row) + line
         print '  ' + ' '.join([str(col) for col in xrange(ConnectFourBoard.NUM_COLS)])
-        self.visualize_image('test')
+        #self.visualize_image('test')
 
     def visualize_image(self, imgName, save=True):
         '''
