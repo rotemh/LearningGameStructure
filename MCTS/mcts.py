@@ -8,6 +8,13 @@ from game import *
 #        time limit of calculation in second
 # Output: class Action represents the best action to take
 ##########################################################
+def main():
+    board = game.ConnectFourBoard()
+    time_limit = 4
+    uct(board, time_limit)
+    
+
+
 def uct(board, time_limit):
     # record start time
     start_time = time.time()

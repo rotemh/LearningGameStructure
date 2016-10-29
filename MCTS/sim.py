@@ -19,7 +19,7 @@ def simulate_game(uct):
     player_2 = game.ComputerPlayer('alpha-beta', algo.alpha_beta_algo, time_limit_2)
     player_3 = game.ConnectFourHumanPlayer('me', inp.connect_four_console_source)
     sim = game.Simulation(board, player_1, player_2)
-    sim.run(json_visualize=True)
+    sim.run(visualize=True, json_visualize=False)
     time.sleep(0.3)
     return sim.board.current_player_id()
 
