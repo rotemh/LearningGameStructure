@@ -1,0 +1,3 @@
+[submodule "MCTS/yo-old-code/MCTS6834"]
+	path = MCTS/yo-old-code/MCTS6834
+	url = https://github.com/aadah/MCTS6834.git
