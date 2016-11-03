@@ -7,7 +7,9 @@ from pprint import pprint
 
 #Image Visualization files
 from pygame.locals import *
+import pygame.surfarray as surfarray
 import pygame
+
 
 
 class Board(object):
@@ -98,9 +100,9 @@ class ConnectFourBoard(Board):
     NUM_ROWS = 6
 
     #Image Visualization Parameters:
-    SPACESIZE = 100 #size of the tokens and board spaces in pixels
-    WINDOWWIDTH  = 1000 # in pixels
-    WINDOWHEIGHT = 960 # pixels
+    SPACESIZE = 5 #size of the tokens and board spaces in pixels
+    WINDOWWIDTH  = SPACESIZE * (NUM_COLS +1)# in pixels
+    WINDOWHEIGHT = SPACESIZE * (NUM_ROWS +1) # pixels
     XMARGIN = int((WINDOWWIDTH - NUM_COLS * SPACESIZE) / 2)
     YMARGIN = int((WINDOWHEIGHT - NUM_ROWS * SPACESIZE) / 2)
 
@@ -109,9 +111,10 @@ class ConnectFourBoard(Board):
     BGCOLOR = WHITE
 
     #Token Images
-    RED_IMG = pygame.image.load('4row_red.png')
-    BLACK_IMG = pygame.image.load('4row_black.png')
-    BOARD_IMG = pygame.image.load('4row_board.png')
+    redPath = '4row_red.png'
+    blackPath = '4row_black.png'
+    boardPath = '4row_board.png'
+    [RED_IMG,BLACK_IMG,BOARD_IMG] = [pygame.transform.scale(pygame.image.load(p),(SPACESIZE,SPACESIZE)) for p in [redPath,blackPath,boardPath]]
 
 
     def __init__(self, state=None, turn=None):
@@ -279,17 +282,17 @@ class ConnectFourBoard(Board):
             line = ' '.join(line)
             print '{} '.format(row) + line
         print '  ' + ' '.join([str(col) for col in xrange(ConnectFourBoard.NUM_COLS)])
-        #self.visualize_image('test')
+        print(self.visualize_image('test', True)[0][0])
 
-    def visualize_image(self, imgName, save=True):
+    def visualize_image(self, imgName, saveImgFile=False):
         '''
-        uses pygame to visualize image and saves it if true.
+        uses pygame to visualize image and returns a 3d np array.
         '''
         self.window.fill(ConnectFourBoard.BGCOLOR)
 
         spaceRect = pygame.Rect(0, 0, ConnectFourBoard.SPACESIZE, ConnectFourBoard.SPACESIZE)
         getSpaceRectCoords = lambda x, y: (ConnectFourBoard.XMARGIN + (x * ConnectFourBoard.SPACESIZE), 
-            (y * ConnectFourBoard.SPACESIZE))
+            (y * ConnectFourBoard.SPACESIZE) - ConnectFourBoard.YMARGIN )
         for x in xrange(ConnectFourBoard.NUM_COLS):
             for y in reversed(xrange(ConnectFourBoard.NUM_ROWS)):
                 spaceRect.topleft = getSpaceRectCoords(x, ConnectFourBoard.NUM_ROWS - y)
@@ -299,12 +302,12 @@ class ConnectFourBoard(Board):
                     self.window.blit(ConnectFourBoard.BLACK_IMG, spaceRect)
                 self.window.blit(ConnectFourBoard.BOARD_IMG, spaceRect)
 
-        if save:
+        if saveImgFile:
             pygame.display.update()
             completeImgName = imgName + ".jpeg"
             pygame.image.save(self.window, completeImgName)
 
-        return
+        return surfarray.array3d(self.window)
 
 
 
