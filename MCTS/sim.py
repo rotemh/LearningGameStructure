@@ -32,6 +32,11 @@ def generate_uct_game(time_limit=1.0):
     history = sim.run(state_action_history=True)
     return history
 
+def generate_custom_policy_game(algo_1, algo_2):
+    # Play using two custom algorithms
+    player_1 = game.ComputerPlayer('algo_1', algo_1)
+    player_2 = game.ComputerPlayer('algo_2', algo_2)
+
 def make_game_vis():
     frame = IFrame('vis/index.html', 490, 216)
     display(frame)

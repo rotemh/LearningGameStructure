@@ -320,7 +320,6 @@ class ConnectFourBoard(Board):
         
         return ConnectFourBoard(new_state, self.turn)
 
-
 class Action(object):
     """
     This class represents a generic action that
