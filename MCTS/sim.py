@@ -23,6 +23,15 @@ def simulate_game(uct):
     time.sleep(0.3)
     return sim.board.current_player_id()
 
+def generate_uct_game(time_limit=1.0):
+    # The higher the time_limit, the better the players will perform
+    board = game.connectFourBoard()
+    player_1 = game.ComputerPlayer('mcts', mcts.uct, time_limit)
+    player_2 = game.ComputerPlayer('mcts', mcts.uct, time_limit)
+    sim = game.Simultation(board, player_1, player_2)
+    history = sim.run(state_action_history=True)
+    return history
+
 def make_game_vis():
     frame = IFrame('vis/index.html', 490, 216)
     display(frame)

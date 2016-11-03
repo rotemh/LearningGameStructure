@@ -594,24 +594,6 @@ class Node(object):
         
         return exploitation_value + exploration_value
 
-    def save_visual_state_action_pair(self, file_prefix):
-        """
-        Return the action taken to reach this state. Also
-        save two images, one of the previous state's board,
-        and one of the current state's board.
-        The formats for their names are 
-        file_prefix_before and file_prefix_after_[integer signature of action]
-
-        params:
-        file_prefix - the prefix for the files that will contain the boards' before and after representations
-        """
-
-        if self.parent == None:
-            raise IllegalArgumentError
-        self.parent.board.visualize(file_prefix + "_before")
-        self.board.visualize(filename + "_after_" + self.action.string_abbreviation())
-        return self.action
-
 
 class Simulation(object):
     """
@@ -625,10 +607,11 @@ class Simulation(object):
         self.players = players
         self.history = []
 
-    def run(self, visualize=False, json_visualize=False):
+    def run(self, visualize=False, json_visualize=False, state_action_history=False):
         self.game_id = str(random.randint(0,3133337))
 
         while not self.board.is_terminal():
+            old_board = self.board
             if visualize:
                 self.board.visualize()
             if json_visualize:
@@ -637,8 +620,12 @@ class Simulation(object):
             player = self.players[player_id]
             action = player.choose_action(self.board)
             self.board = player.play_action(action, self.board)
-            self.history.append((player_id, action))
-
+            if state_action_history:
+                self.history.append((player_id, old_board.visualize_image(), action, self.board.visualize_image(), self.board.reward_vector()))
+            else:
+                self.history.append((player_id, action))
+        if state_action_history:
+            return self.history
         if json_visualize:
             self.write_visualization_json()
 
