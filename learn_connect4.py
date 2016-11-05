@@ -16,6 +16,7 @@ def main():
   rl_agent = ReinforcementLearningAgent(128)
 
   # obtain training data
+	if 
   generate_training_data(100000)
   import pdb;pdb.set_trace()
 
