@@ -11,6 +11,8 @@ import pygame.surfarray as surfarray
 import pygame
 
 
+import numpy as np
+import scipy.io as sio
 
 class Board(object):
     """
@@ -96,11 +98,11 @@ class ConnectFourBoard(Board):
     RED = 'R'
     BLACK = 'B'
     EMPTY = '-'
-    NUM_COLS = 7
-    NUM_ROWS = 6
+    NUM_COLS = 8
+    NUM_ROWS = 8
 
     #Image Visualization Parameters:
-    SPACESIZE = 5 #size of the tokens and board spaces in pixels
+    SPACESIZE = 128/NUM_COLS #size of the tokens and board spaces in pixels; make it 128 by 128
     WINDOWWIDTH  = SPACESIZE * (NUM_COLS +1)# in pixels
     WINDOWHEIGHT = SPACESIZE * (NUM_ROWS +1) # pixels
     XMARGIN = int((WINDOWWIDTH - NUM_COLS * SPACESIZE) / 2)
@@ -111,9 +113,9 @@ class ConnectFourBoard(Board):
     BGCOLOR = WHITE
 
     #Token Images
-    redPath = '4row_red.png'
-    blackPath = '4row_black.png'
-    boardPath = '4row_board.png'
+    redPath = './MCTS/4row_red.png'
+    blackPath = './MCTS/4row_black.png'
+    boardPath = './MCTS/4row_board.png'
     [RED_IMG,BLACK_IMG,BOARD_IMG] = [pygame.transform.scale(pygame.image.load(p),(SPACESIZE,SPACESIZE)) for p in [redPath,blackPath,boardPath]]
 
 
@@ -284,7 +286,7 @@ class ConnectFourBoard(Board):
         print '  ' + ' '.join([str(col) for col in xrange(ConnectFourBoard.NUM_COLS)])
         print(self.visualize_image('test', True)[0][0])
 
-    def visualize_image(self, imgName, saveImgFile=False):
+    def visualize_image(self, imgName='NULL', saveImgFile=False):
         '''
         uses pygame to visualize image and returns a 3d np array.
         '''
@@ -302,12 +304,16 @@ class ConnectFourBoard(Board):
                     self.window.blit(ConnectFourBoard.BLACK_IMG, spaceRect)
                 self.window.blit(ConnectFourBoard.BOARD_IMG, spaceRect)
 
+
+        board_img = surfarray.array3d(self.window)
         if saveImgFile:
             pygame.display.update()
             completeImgName = imgName + ".jpeg"
-            pygame.image.save(self.window, completeImgName)
+            #pygame.image.save(self.window, completeImgName)
+            sio.savemat(completeImgName,{'board_img':board_img})
+            
 
-        return surfarray.array3d(self.window)
+        return board_img
 
 
 
@@ -626,6 +632,7 @@ class Simulation(object):
                 self.history.append((player_id, old_board.visualize_image(), action, self.board.visualize_image(), self.board.reward_vector()))
             else:
                 self.history.append((player_id, action))
+       
         if state_action_history:
             return self.history
         if json_visualize:

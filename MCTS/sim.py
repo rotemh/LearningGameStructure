@@ -10,7 +10,6 @@ from pprint import pprint
 
 def simulate_game(uct):
     #make_game_vis()#
-
     time_limit_1 = 0.4
     time_limit_2 = 0.4
 
@@ -19,17 +18,18 @@ def simulate_game(uct):
     player_2 = game.ComputerPlayer('alpha-beta', algo.alpha_beta_algo, time_limit_2)
     player_3 = game.ConnectFourHumanPlayer('me', inp.connect_four_console_source)
     sim = game.Simulation(board, player_1, player_2)
-    sim.run(visualize=True, json_visualize=False)
+    episode = sim.run(visualize=True, json_visualize=False,state_action_history=True)
     time.sleep(0.3)
-    return sim.board.current_player_id()
+    #return sim.board.current_player_id() # why would we need an id?
+    return episode
 
 def generate_uct_game(time_limit=1.0):
     # The higher the time_limit, the better the players will perform
-    board = game.connectFourBoard()
+    board = game.ConnectFourBoard()
     player_1 = game.ComputerPlayer('mcts', mcts.uct, time_limit)
     player_2 = game.ComputerPlayer('mcts', mcts.uct, time_limit)
-    sim = game.Simultation(board, player_1, player_2)
-    history = sim.run(state_action_history=True)
+    sim = game.Simulation(board, player_1, player_2)
+    history = sim.run(visualize=False,state_action_history=True)
     return history
 
 def generate_custom_policy_game(algo_1, algo_2):
@@ -75,4 +75,5 @@ def lose():
     <strong>You can only lose once :(</strong>
     </div>""", raw=True)
 
-simulate_game(mcts.uct)
+#history = simulate_game(mcts.uct)
+#import pdb;pdb.set_trace()
