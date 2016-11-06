@@ -14,17 +14,34 @@ def generate_supervised_training_data(num_episodes):
     sio.savemat('/media/beomjoon/My Passport/vision_project/supervised_data/train_data' + str(x)+'.mat',{'train_data':train_data})
 
 def load_supervised_training_data( train_dir ):
-	train_files = os.list_dir(train_dir)
-	for f in train_files:
-		asdf = sio.loadmat( f )
-		import pdb;pdb.set_trace()
+  train_files = os.listdir(train_dir)
+  
+  s_data = []
+  a1 = []; a2=[]
+  sprime_data = []
+  reward = []
+  for f in train_files:
+    try:
+      data = sio.loadmat( train_dir+'/'+f )['train_data']
+      s_data += [data[0][1]]
+      a1 += [data[0][2][0][0][1][0][0]]
+      a2 += [data[0][2][0][0][2][0][0]]
+      sprime_data += [data[0][3]]
+      reward += [data[0][4]]
+    except:
+      # some files corrupted
+      continue
+  return s_data,a1,a2
 
 def main():
-  rl_agent = ReinforcementLearningAgent(128)
 
   # obtain training data
   #generate_supervised_training_data(100000)
-	#train_data = load_supervised_training_data('./train_data')
+  s_data,a1,a2 = load_supervised_training_data('./train_data')
+  print np.shape(s_data)
+  rl_agent = ReinforcementLearningAgent(144,8)
+  rl_agent.update_supervised_policy(s_data,a1,a2)
+  episode = generate_custom_policy_game(time_limit=0.5)
 
 if __name__ == '__main__':
     main()
