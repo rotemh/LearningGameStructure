@@ -39,7 +39,7 @@ def main():
   # obtain training data
   s_data,a1,a2 = load_supervised_training_data('./train_data')
   rl_agent = ReinforcementLearningAgent(144,8)
-#  rl_agent.update_supervised_policy(s_data,a1,a2)
+  rl_agent.update_supervised_policy(s_data,a1,a2)
   episode = generate_custom_policy_game(rl_agent,rl_agent)
 
 if __name__ == '__main__':
