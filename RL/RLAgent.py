@@ -7,31 +7,8 @@ import numpy as np
 class ReinforcementLearningAgent():
   def __init__(self,img_size,num_actions):
     s_img = Input( shape=(img_size,img_size,3),name='s_img',dtype='float32')
-#    sprime_img = Input( shape=(3,img_size,img_size,name='sprime_img',dtype='float32'))
-#    sprime_layers = sprime_img
     self.num_actions  = num_actions
     kernel_size = 2
-
-    #TODO: Add pooling layers
-    # define supervised policy model
-    #TODO: use functional representation
-    """
-    self.supervised_policy_a1 = Sequential()
-    self.supervised_policy_a1.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, input_shape=(img_size,img_size,3),border_mode='same'))
-    self.supervised_policy_a1.add( Convolution2D( nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,border_mode='same' ))
-    self.supervised_policy_a1.add( Convolution2D( nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,border_mode='same'))
-    self.supervised_policy_a1.add(Flatten())
-    self.supervised_policy_a1.add( Dense(num_actions,activation='softmax'))
-    self.supervised_policy_a1.compile(loss = 'categorical_crossentropy',optimizer='adam')
-
-    self.supervised_policy_a2 = Sequential()
-    self.supervised_policy_a2.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, input_shape=(img_size,img_size,3),border_mode='same'))
-    self.supervised_policy_a2.add( Convolution2D( nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,border_mode='same' ))
-    self.supervised_policy_a2.add( Convolution2D( nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,border_mode='same'))
-    self.supervised_policy_a2.add(Flatten())
-    self.supervised_policy_a2.add( Dense(num_actions,activation='softmax'))
-    self.supervised_policy_a2.compile(loss = 'categorical_crossentropy',optimizer='adam')
-    """
 
     sup_network_h0 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
@@ -44,6 +21,8 @@ class ReinforcementLearningAgent():
     V = merge([sup_network_a1,sup_network_a2],mode='concat')
     self.sup_policy = Model(input =s_img,output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
+  
+    #TODO: implement the rest
     """
     # define the value network
     self.value_network = Sequential() 
@@ -86,11 +65,21 @@ class ReinforcementLearningAgent():
   def predict_value(self,s):
     return self.value_network.predict(s)
 
-  def predict_action_prob(self,s,policy='supervised'):
+  def predict_action(self,s,policy='supervised'):
+    s = np.asarray(s)
+
+    if len(np.shape(s)) == 3:
+      s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
+
     if policy=='supervised':
-        return self.supervised_policy.fit(s)
+        action_prob = self.sup_policy.predict(s)
+        col_action_prob = action_prob[0,0:8]
+        row_action_prob = action_prob[0,8:]
+        col_action = np.argmax(col_action_prob)
+        row_action = np.argmax(row_action_prob)
+        return col_action,row_action
     else:
-        return self.policy_network.fit(s)
+        return self.policy_network.predict(s)
     
 
   def q_learning_value_network(self,s,sprime,a,r):

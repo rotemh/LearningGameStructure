@@ -494,6 +494,22 @@ class ComputerPlayer(Player):
         else:
             return self.algo(board)
 
+class RLPlayer(Player):
+  """
+  Reinforcement learning player that takes a
+  RLAgent obejct and provides an action by
+  predicting from the board image
+  """
+  def __init__(self,name,agent):
+    Player.__init__(self,name)
+    self.agent = agent
+  
+  def choose_action(self,board):
+    board_img = board.visualize_image()
+    col,row = self.agent.predict_action(board_img)
+    action = ConnectFourAction(board.turn, col, row)
+    #TODO: Check if this is a legal action
+    return action
 
 class Node(object):
     """
@@ -628,6 +644,7 @@ class Simulation(object):
             player = self.players[player_id]
             action = player.choose_action(self.board)
             self.board = player.play_action(action, self.board)
+              
             if state_action_history:
                 self.history.append((player_id, old_board.visualize_image(), action, self.board.visualize_image(), self.board.reward_vector()))
             else:

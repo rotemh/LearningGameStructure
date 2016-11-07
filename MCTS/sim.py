@@ -28,14 +28,21 @@ def generate_uct_game(time_limit=1.0):
     board = game.ConnectFourBoard()
     player_1 = game.ComputerPlayer('mcts', mcts.uct, time_limit)
     player_2 = game.ComputerPlayer('mcts', mcts.uct, time_limit)
+
+    #ComputerPlayer -> choose_action ->self.aglo(board) -> returns the action
     sim = game.Simulation(board, player_1, player_2)
     history = sim.run(visualize=False,state_action_history=True)
     return history
 
 def generate_custom_policy_game(algo_1, algo_2):
     # Play using two custom algorithms
-    player_1 = game.ComputerPlayer('algo_1', algo_1)
-    player_2 = game.ComputerPlayer('algo_2', algo_2)
+    board = game.ConnectFourBoard()
+    player_1 = game.RLPlayer('algo_1', algo_1)
+    player_2 = game.RLPlayer('algo_2', algo_2)
+    asdf=player_1.choose_action(board)
+    sim = game.Simulation(board, player_1, player_2)
+    history = sim.run(visualize=False,state_action_history=True)
+    return history
 
 def make_game_vis():
     frame = IFrame('vis/index.html', 490, 216)

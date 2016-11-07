@@ -12,8 +12,6 @@ def main():
     board = game.ConnectFourBoard()
     time_limit = 4
     uct(board, time_limit)
-    
-
 
 def uct(board, time_limit):
     # record start time
@@ -25,8 +23,7 @@ def uct(board, time_limit):
         tree_terminal = tree_policy(root, c)
         reward_vector = default_policy(tree_terminal.get_board())
         backup(tree_terminal, reward_vector)
-        
-    return best_child(root, 0).get_action()
+    return best_child(root, 0).get_action() # where is this tree node coming from?
 
 def uct_fixed_horizon(board, time_limit):
     # record start time
