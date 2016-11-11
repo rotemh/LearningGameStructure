@@ -11,8 +11,10 @@ def generate_supervised_training_data(num_episodes):
     print x
     episode = generate_uct_game(time_limit=0.5)
     win_player_id = np.argmax(episode[-1][-1])
-    train_data = [e for e in episode if e[0] == win_player_id]
-    sio.savemat('/media/beomjoon/My Passport/vision_project/supervised_data/train_data' + str(x)+'.mat',{'train_data':train_data})
+    winner_train_data = [e for e in episode if e[0] == win_player_id]
+    loser_train_data = [e for e in episode if e[0] != win_player_id]
+    sio.savemat('/media/beomjoon/My Passport/vision_project/supervised_data/train_data' \
+                  + str(x)+'.mat',{'winner_train_data':winner_train_data,'loser_train_data':loser_train_data})
 
 def load_supervised_training_data( train_dir ):
   train_files = os.listdir(train_dir)
