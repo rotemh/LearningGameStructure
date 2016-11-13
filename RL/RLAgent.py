@@ -23,7 +23,6 @@ class ReinforcementLearningAgent:
     self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
   
     #TODO: implement the rest
-    """
     # define the value network
     self.value_network = Sequential() 
     self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, input_shape=(img_size,img_size,3)) )
@@ -31,7 +30,8 @@ class ReinforcementLearningAgent:
     self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size))
     self.value_network.add( Dense(1,activation='linear') )
     self.value_network.compile(loss = 'mse',optimizer='adam')
-  
+
+    """
     # define the policy network
     import theano.tensor as T
     def policy_network_loss_func( y, y_pred, base_line ):
