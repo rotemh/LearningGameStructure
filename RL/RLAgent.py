@@ -4,7 +4,7 @@ from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 import numpy as np
 
-class ReinforcementLearningAgent():
+class ReinforcementLearningAgent:
   def __init__(self,img_size,num_actions):
     s_img = Input( shape=(img_size,img_size,3),name='s_img',dtype='float32')
     self.num_actions  = num_actions
