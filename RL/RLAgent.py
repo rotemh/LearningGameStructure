@@ -64,6 +64,11 @@ class ReinforcementLearningAgent:
     return self.value_network.predict(s)
 
   def predict_action(self,s,policy='supervised'):
+    '''
+    This function returns a probability distribution across columns
+    when policy is set to supervised. It does nothing when policy
+    is not set to supervised since there is no policy_network
+    '''
     s = np.asarray(s)
 
     if len(np.shape(s)) == 3:
@@ -71,8 +76,7 @@ class ReinforcementLearningAgent:
 
     if policy=='supervised':
         action_prob = self.sup_policy.predict(s)
-        col_action = np.argmax(action_prob)
-        return col_action
+        return action_prob
     else:
         return self.policy_network.predict(s)
     

@@ -507,15 +507,11 @@ class RLPlayer(Player):
   def choose_action(self,board):
     board_img = board.visualize_image()
     legal_actions = board.get_legal_actions()
-    illegal_columns = []
-
-    while len(illegal_columns) < board.NUM_COLS:
-        col = self.agent.predict_action(board_img)
-        column = board.state[col]
-        for row in xrange(len(column)):
-            if column[row] == ConnectFourBoard.EMPTY:
-                return ConnectFourAction(self.turn, col, row)
-        illegal_columns.append(col)
+    if len(legal_actions) > 0:
+        column_prob_dist = self.agent.predict_action(board_img)
+        legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
+        col_action = np.argmax(legal_column_prob_dist) 
+        return col_action
     raise IllegalArgumentException("This should never have occurred, the game is already over")
 
 class Node(object):
