@@ -28,6 +28,7 @@ class ReinforcementLearningAgent:
     self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, input_shape=(img_size,img_size,3)) )
     self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size ))
     self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size))
+    self.value_network.add(Flatten())
     self.value_network.add( Dense(1,activation='linear') )
     self.value_network.compile(loss = 'mse',optimizer='adam')
 
