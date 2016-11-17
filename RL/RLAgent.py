@@ -8,7 +8,7 @@ class ReinforcementLearningAgent:
   def __init__(self,img_size,num_actions):
     s_img = Input( shape=(img_size,img_size,3),name='s_img',dtype='float32')
     self.num_actions  = num_actions
-    kernel_size = 2
+    kernel_size = 3
 
     sup_network_h0 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
@@ -16,9 +16,8 @@ class ReinforcementLearningAgent:
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
     sup_network_h1 = Flatten()(sup_network_h1)
   
-    sup_network_a1 = Dense(num_actions,activation='softmax')(sup_network_h1) # different output layers for each action
-    sup_network_a2 = Dense(num_actions,activation='softmax')(sup_network_h1)
-    V = merge([sup_network_a1,sup_network_a2],mode='concat')
+    sup_network_a = Dense(num_actions,activation='softmax')(sup_network_h1) # different output layers for each action
+    V = sup_network_a
     self.sup_policy = Model(input =s_img,output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
   
@@ -53,12 +52,10 @@ class ReinforcementLearningAgent:
     self.policy_network.fit( s, nb_epoch= 1 ) 
   """
 
-  def update_supervised_policy(self,state,a1,a2):
-    a1 = np_utils.to_categorical(a1, self.num_actions).astype('int32')
-    a2 = np_utils.to_categorical(a2, self.num_actions).astype('int32')
-    actions = np.c_[a1,a2]
+  def update_supervised_policy(self,state,a):
+    action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
-    self.sup_policy.fit(state,actions)
+    self.sup_policy.fit(state,action)
   
   def update_value_network(self,s,v):
     self.value_network.fit( s,v,nb_epoch=100 )
@@ -74,11 +71,8 @@ class ReinforcementLearningAgent:
 
     if policy=='supervised':
         action_prob = self.sup_policy.predict(s)
-        col_action_prob = action_prob[0,0:8]
-        row_action_prob = action_prob[0,8:]
-        col_action = np.argmax(col_action_prob)
-        row_action = np.argmax(row_action_prob)
-        return col_action,row_action
+        col_action = np.argmax(action_prob)
+        return col_action
     else:
         return self.policy_network.predict(s)
     

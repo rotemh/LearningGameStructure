@@ -506,10 +506,17 @@ class RLPlayer(Player):
   
   def choose_action(self,board):
     board_img = board.visualize_image()
-    col,row = self.agent.predict_action(board_img)
-    action = ConnectFourAction(board.turn, col, row)
-    #TODO: Check if this is a legal action
-    return action
+    legal_actions = board.get_legal_actions()
+    illegal_columns = []
+
+    while len(illegal_columns) < board.NUM_COLS:
+        col = self.agent.predict_action(board_img)
+        column = board.state[col]
+        for row in xrange(len(column)):
+            if column[row] == ConnectFourBoard.EMPTY:
+                return ConnectFourAction(self.turn, col, row)
+        illegal_columns.append(col)
+    raise IllegalArgumentException("This should never have occurred, the game is already over")
 
 class Node(object):
     """
