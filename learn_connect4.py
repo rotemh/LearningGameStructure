@@ -33,7 +33,7 @@ def load_supervised_training_data( train_dir ):
     except:
       # some files corrupted
       continue
-  return np.asarray(s_data),np.asarray(a1),np.asarray(a2)
+  return np.asarray(s_data),np.asarray(a)
 
 def main():
   # generate_supervised_training_data(100000)
