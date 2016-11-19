@@ -5,7 +5,7 @@ import numpy as np
 import scipy.io as sio
 import os
 
-def generate_supervised_training_data(num_episodes, time_limit=0.5, directory_name='/media/beomjoon/My Passport/vision_project/supervised_data/train_data'):
+def generate_supervised_training_data(num_episodes, time_limit=0.5, file_path='/media/beomjoon/My Passport/vision_project/supervised_data/train_data'):
   train_data= []
   for x in xrange(num_episodes): 
     print x
@@ -13,7 +13,7 @@ def generate_supervised_training_data(num_episodes, time_limit=0.5, directory_na
     win_player_id = np.argmax(episode[-1][-1])
     winner_train_data = [e for e in episode if e[0] == win_player_id]
     loser_train_data = [e for e in episode if e[0] != win_player_id]
-    sio.savemat(directory_name + str(x)+'.mat',{'winner_train_data':winner_train_data,'loser_train_data':loser_train_data,\
+    sio.savemat(file_path + str(x)+'.mat',{'winner_train_data':winner_train_data,'loser_train_data':loser_train_data,\
                   'uct_time_limit':time_limit})
 
 def load_supervised_training_data( train_dir ):
