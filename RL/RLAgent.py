@@ -58,7 +58,7 @@ class ReinforcementLearningAgent:
     a2 = np_utils.to_categorical(a2, self.num_actions).astype('int32')
     actions = np.c_[a1,a2]
     state = np.asarray(state)
-    self.sup_policy.fit(state,actions)
+    self.sup_policy.fit(state,actions,nb_epoch=1)
   
   def update_value_network(self,s,v):
     self.value_network.fit( s,v,nb_epoch=100 )
@@ -82,7 +82,6 @@ class ReinforcementLearningAgent:
     else:
         return self.policy_network.predict(s)
     
-
   def q_learning_value_network(self,s,sprime,a,r):
     #NOTE: not sure if we need this
     pass

@@ -26,19 +26,20 @@ def load_supervised_training_data( train_dir ):
   for f in train_files:
     try:
       data = sio.loadmat( train_dir+'/'+f )['train_data']
-      s_data += [data[0][1]]
-      a1 += [data[0][2][0][0][1][0][0]] # col
-      a2 += [data[0][2][0][0][2][0][0]] # row
-      sprime_data += [data[0][3]]
-      reward += [data[0][4]]
+      for i in range(data.shape[0]):
+        s_data += [data[i][1]]
+        a1 += [data[i][2][0][0][1][0][0]] # col
+        a2 += [data[i][2][0][0][2][0][0]] # row
+        sprime_data += [data[i][3]]
+        reward += [data[i][4]]
     except:
       # some files corrupted
       continue
+    print f
   return np.asarray(s_data),np.asarray(a1),np.asarray(a2)
 
 def main():
   # generate_supervised_training_data(100000)
-  # obtain training data
   s_data,a1,a2 = load_supervised_training_data('./train_data')
   rl_agent = ReinforcementLearningAgent(144,8)
   rl_agent.update_supervised_policy(s_data,a1,a2)
