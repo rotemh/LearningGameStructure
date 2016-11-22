@@ -26,7 +26,7 @@ labels_b = f_b(data[:,0],data[:,1],data[:,2])
 labels = np.asarray([labels_a,labels_b]).transpose()
 #labels = labels_a
 
-model.fit(data,labels,nb_epoch=1000,batch_size=32)
+model.fit(data,labels,nb_epoch=100,batch_size=32)
 
 validation_data = np.random.random((NUM_VALIDATION_POINTS,3))
 validation_labels_a = f_a(data[:,0],data[:,1],data[:,2])
