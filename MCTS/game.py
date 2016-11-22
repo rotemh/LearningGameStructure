@@ -119,7 +119,7 @@ class ConnectFourBoard(Board):
     [RED_IMG,BLACK_IMG,BOARD_IMG] = [pygame.transform.scale(pygame.image.load(p),(SPACESIZE,SPACESIZE)) for p in [redPath,blackPath,boardPath]]
 
 
-    def __init__(self, state=None, turn=None):
+    def __init__(self, state=None, turn=None, display=True):
         """
         params:
         state - the board state represented as nested lists
@@ -134,12 +134,6 @@ class ConnectFourBoard(Board):
             self.turn = turn
 
         self.last_move = None
-
-
-        #Visualize as Image Init
-        pygame.init()
-        self.window = pygame.display.set_mode((ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT))
-        pygame.display.set_caption('Connect 4')
         
     def get_legal_actions(self):
         actions = set()
@@ -290,6 +284,9 @@ class ConnectFourBoard(Board):
         '''
         uses pygame to visualize image and returns a 3d np array.
         '''
+        pygame.init()
+        self.window = pygame.display.set_mode((ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT))
+        pygame.display.set_caption('Connect 4')
         self.window.fill(ConnectFourBoard.BGCOLOR)
 
         spaceRect = pygame.Rect(0, 0, ConnectFourBoard.SPACESIZE, ConnectFourBoard.SPACESIZE)
@@ -506,10 +503,13 @@ class RLPlayer(Player):
   
   def choose_action(self,board):
     board_img = board.visualize_image()
-    col,row = self.agent.predict_action(board_img)
-    action = ConnectFourAction(board.turn, col, row)
-    #TODO: Check if this is a legal action
-    return action
+    legal_actions = board.get_legal_actions()
+    if len(legal_actions) > 0:
+        column_prob_dist = self.agent.predict_action(board_img)
+        legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
+        col_action = np.argmax(legal_column_prob_dist) 
+        return col_action
+    raise IllegalArgumentException("This should never have occurred, the game is already over")
 
 class Node(object):
     """
@@ -649,11 +649,13 @@ class Simulation(object):
                 self.history.append((player_id, old_board.visualize_image(), action, self.board.visualize_image(), self.board.reward_vector()))
             else:
                 self.history.append((player_id, action))
-       
-        if state_action_history:
-            return self.history
+        
         if json_visualize:
             self.write_visualization_json()
+        if state_action_history:
+            return self.history
+        else:
+            return self.board.reward_vector()[0] # 1 if player 1 won, 0 if tie, -1 if loss
 
     def write_visualization_json(self):
         data = self.board.json_visualize()
