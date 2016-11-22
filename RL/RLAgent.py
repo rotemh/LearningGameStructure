@@ -73,6 +73,14 @@ class ReinforcementLearningAgent:
     state = np.asarray(state)
     early = EarlyStopping(monitor='loss', patience=20, verbose=0, mode='auto')
     self.sup_policy.fit(state,action,nb_epoch=100,callbacks=[early])
+    weight_fname = './policyWeights/sup/supweights.h5'
+    if os.path.exists(weight_fname):
+      #overwrite = bool(int(raw_input('Overwrite sup weights?')))
+      ovewrite=True
+      if overwrite:
+        self.sup_policy.save_weights('./policyWeights/sup/supweights.h5')
+      else:
+        return
   
   def update_value_network(self,s,v):
     self.value_network.fit( s,v,nb_epoch=100 )
