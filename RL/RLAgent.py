@@ -6,7 +6,6 @@ from keras import backend as K
 import numpy as np
 
 class ReinforcementLearningAgent:
-<<<<<<< HEAD
   def __init__(self,img_shape,num_actions):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
@@ -52,7 +51,7 @@ class ReinforcementLearningAgent:
 
   def create_supervised_Q_model(self):
     raise NotImplementedError("Doesn't actually work yet")
-    
+
     state = Input(shape=self.state_size)
     next_state = Input(shape=self.state_size)
     action = Input(shape=(1,), dtype='int32')
