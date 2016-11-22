@@ -10,7 +10,7 @@ NUM_VALIDATION_POINTS = 10
 model = Sequential()
 
 model.add(Dense(output_dim=500,input_dim=3))
-model.add(Activation("relu"))
+model.add(Activation("linear"))
 # model.add(Dense(output_dim=500))
 # model.add(Activation("relu"))
 model.add(Dense(output_dim=2))
