@@ -3,6 +3,10 @@ from keras.layers import Dense, Dropout, Activation, Flatten, Input, merge
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 from keras import backend as K
+if K.backend == 'tensorflow':
+  from tensorflow import stop_gradient
+elif K.backend == 'theano':
+  from theano.gradient import disconnected_grad
 import numpy as np
 
 class ReinforcementLearningAgent:
@@ -19,7 +23,7 @@ class ReinforcementLearningAgent:
     def policy_network_loss_func( y, y_pred, base_line ):
       # TODO: something is wrong here; we would like to increase the probability of action that has high advantage value. Comeback later
       return -T.log(y_pred) * base_line 
-    policy_network_loss_with_baseline = partial(policy_network_loss_func,base_line= self.value_network)
+    policy_network_loss_with_baseline = partial(policy_network_loss_func,base_line= self.Q_network)
     policy_network_loss_with_baseline.__name__ = ' policy_network_loss_with_baseline'
 
     self.policy_network = Sequential()
@@ -49,34 +53,49 @@ class ReinforcementLearningAgent:
     self.sup_policy = Model(input =s_img,output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
 
-  def create_supervised_Q_model(self):
+  def create_Q_model(self):
     raise NotImplementedError("Doesn't actually work yet")
+    self.Q_network = Sequential() 
+    self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
+     input_shape=self.image_shape, subsample=(4,4), activation='relu') )
+    self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
+     input_shape=self.image_shape, subsample=(4,4), activation='relu') )
+    self.Q_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,\
+     subsample=(2,2), activation='relu') )
+    self.Q_network.add(Flatten())
+    self.Q_network.add( Dense(256,activation='relu'))
+    self.Q_network.add( Dense(self.num_actions))
+    self.Q_network.compile(loss = 'mse',optimizer='adam')
 
-    state = Input(shape=self.state_size)
-    next_state = Input(shape=self.state_size)
+  def create_supervised_Q_cost_function(self):
+    state = Input(shape=self.img_shape, dtype='float32')
+    next_state = Input(shape=self.img_shape, dtype='float32')
     action = Input(shape=(1,), dtype='int32')
     reward = Input(shape=(1,), dtype='float32')
-    transition = Input(shape=(1,), dtype='int32')
-    self.value_network = Sequential() 
-    self.value_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
-     input_shape=self.image_shape, subsample=(4,4), activation='relu') )
-    self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,\
-     subsample=(2,2), activation='relu') )
-    self.value_network.add(Flatten())
-    self.value_network.add( Dense(256,activation='relu'))
-    self.value_network.add( Dense(self.num_actions))
-    self.value_network.compile(loss = 'mse',optimizer='adam')
+    terminal = Input(shape=(1,), dtype='int32') # 0 if not terminal, 1 if yes
+
+    create_Q_model()
+    state_value = self.Q_network(state)
+    if K.backend == 'tensorflow':
+      next_state_value = stop_gradient(self.Q_network(next_state))
+    elif K.backend == 'theano':
+      next_state_value = disconnected_grad(self.Q_network(next_state))
+    else:
+      raise IllegalArgumentException("Must have one of these two backends, tensorflow or theano")
+
+    future_value = (1-terminal) * next_state_value.max(axis=1, keepdims=True) # 0 if terminal, otherwise best next move
+
 
   def update_supervised_policy(self,state,a):
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
     self.sup_policy.fit(state,action)
   
-  def update_value_network(self,s,v):
-    self.value_network.fit( s,v,nb_epoch=100 )
+  def update_Q_network(self,s,v):
+    self.Q_network.fit( s,v,nb_epoch=100 )
 
   def predict_value(self,s):
-    return self.value_network.predict(s)
+    return self.Q_network.predict(s)
 
   def predict_action(self,s,policy='supervised'):
     '''
@@ -96,7 +115,7 @@ class ReinforcementLearningAgent:
         return self.policy_network.predict(s)
     
 
-  def q_learning_value_network(self,s,sprime,a,r):
+  def q_learning_Q_network(self,s,sprime,a,r):
     #NOTE: not sure if we need this
     pass
   
