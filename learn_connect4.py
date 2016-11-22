@@ -20,10 +20,12 @@ def load_supervised_training_data( train_dir ):
   train_files = os.listdir(train_dir)
   
   s_data = []
-  a = []
+  a1 = []
+  a2 = []
   sprime_data = []
   reward = []
   for f in train_files:
+    print f
     try:
       data = sio.loadmat( train_dir+'/'+f )['train_data']
       for i in range(data.shape[0]):
@@ -41,9 +43,10 @@ def load_supervised_training_data( train_dir ):
 def main():
   # generate_supervised_training_data(100000)
   s_data,a1,a2 = load_supervised_training_data('./train_data')
-  rl_agent = ReinforcementLearningAgent(144,8)
-  rl_agent.update_supervised_policy(s_data,a1,a2)
+  rl_agent = ReinforcementLearningAgent((144,144,3),8)
+  rl_agent.update_supervised_policy(s_data,a1)
   episode = generate_custom_policy_game(rl_agent,rl_agent)
+
 
 if __name__ == '__main__':
     main()

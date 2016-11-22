@@ -3,6 +3,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten, Input, merge
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 from keras import backend as K
+from keras.callbacks import *
 import numpy as np
 
 class ReinforcementLearningAgent:
@@ -70,7 +71,8 @@ class ReinforcementLearningAgent:
   def update_supervised_policy(self,state,a):
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
-    self.sup_policy.fit(state,action)
+    early = EarlyStopping(monitor='loss', patience=20, verbose=0, mode='auto')
+    self.sup_policy.fit(state,action,nb_epoch=100,callbacks=[early])
   
   def update_value_network(self,s,v):
     self.value_network.fit( s,v,nb_epoch=100 )
