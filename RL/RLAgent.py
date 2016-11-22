@@ -2,9 +2,11 @@ from keras.models import Sequential,Model
 from keras.layers import Dense, Dropout, Activation, Flatten, Input, merge
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
+from keras import backend as K
 import numpy as np
 
 class ReinforcementLearningAgent:
+<<<<<<< HEAD
   def __init__(self,img_shape,num_actions):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
@@ -12,7 +14,7 @@ class ReinforcementLearningAgent:
     
     self.create_supervised_policy_model()
 
-    """
+  """
     # define the policy network
     import theano.tensor as T
     def policy_network_loss_func( y, y_pred, base_line ):
@@ -35,7 +37,7 @@ class ReinforcementLearningAgent:
 
   def create_supervised_policy_model(self):
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
-    kernel_size = 3
+    kernel_size = 2
 
     sup_network_h0 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
@@ -50,6 +52,7 @@ class ReinforcementLearningAgent:
 
   def create_supervised_Q_model(self):
     raise NotImplementedError("Doesn't actually work yet")
+    
     state = Input(shape=self.state_size)
     next_state = Input(shape=self.state_size)
     action = Input(shape=(1,), dtype='int32')
