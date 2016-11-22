@@ -3,19 +3,22 @@ from keras.layers import Dense, Dropout, Activation, Flatten, Input, merge
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 from keras import backend as K
+from keras.optimizers import RMSprop
 if K.backend == 'tensorflow':
   from tensorflow import stop_gradient
 elif K.backend == 'theano':
   from theano.gradient import disconnected_grad
+from keras.callbacks import *
 import numpy as np
 
 class ReinforcementLearningAgent:
-  def __init__(self,img_shape,num_actions):
+  def __init__(self,img_shape,num_actions,future_discount=.999999):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
     
     self.create_supervised_policy_model()
+    self.future_discount = future_discount
 
   """
     # define the policy network
@@ -54,7 +57,6 @@ class ReinforcementLearningAgent:
     self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
 
   def create_Q_model(self):
-    raise NotImplementedError("Doesn't actually work yet")
     self.Q_network = Sequential() 
     self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
      input_shape=self.image_shape, subsample=(4,4), activation='relu') )
@@ -84,12 +86,41 @@ class ReinforcementLearningAgent:
       raise IllegalArgumentException("Must have one of these two backends, tensorflow or theano")
 
     future_value = (1-terminal) * next_state_value.max(axis=1, keepdims=True) # 0 if terminal, otherwise best next move
+    discounted_future_value = self.future_discount*future_value
+    target = reward + discounted_future_value
+    cost = ((state_value[:,action] - target)**2).mean()
+    opt = RMSprop(.0001)
+    params = self.Q_network.trainable_weights
+    updates = opt.get_updates(params, [], cost)
+    self.train_fn = K.function([state, next_state, action, reward, terminal], cost, updates=updates)
+
+  def update_supervised_Q(self,episodes, minibatch_size):
+    """
+    Updates the self.Q_network
+
+    each episode - [state, next_state, action, reward, terminal]
+    """
+    N = len(episodes)
+    for i in xrange(N):
+      episode = random.randint(0,N-1)
+    raise NotImplementedError
+
+
 
 
   def update_supervised_policy(self,state,a):
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
-    self.sup_policy.fit(state,action)
+    early = EarlyStopping(monitor='loss', patience=20, verbose=0, mode='auto')
+    self.sup_policy.fit(state,action,nb_epoch=100,callbacks=[early])
+    weight_fname = './policyWeights/sup/supweights.h5'
+    if os.path.exists(weight_fname):
+      #overwrite = bool(int(raw_input('Overwrite sup weights?')))
+      ovewrite=True
+      if overwrite:
+        self.sup_policy.save_weights('./policyWeights/sup/supweights.h5')
+      else:
+        return
   
   def update_Q_network(self,s,v):
     self.Q_network.fit( s,v,nb_epoch=100 )
@@ -113,7 +144,6 @@ class ReinforcementLearningAgent:
         return action_prob
     else:
         return self.policy_network.predict(s)
-    
 
   def q_learning_Q_network(self,s,sprime,a,r):
     #NOTE: not sure if we need this
