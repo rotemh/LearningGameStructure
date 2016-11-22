@@ -652,11 +652,13 @@ class Simulation(object):
                 self.history.append((player_id, old_board.visualize_image(), action, self.board.visualize_image(), self.board.reward_vector()))
             else:
                 self.history.append((player_id, action))
-       
-        if state_action_history:
-            return self.history
+        
         if json_visualize:
             self.write_visualization_json()
+        if state_action_history:
+            return self.history
+        else:
+            return self.board.reward_vector()[0] # 1 if player 1 won, 0 if tie, -1 if loss
 
     def write_visualization_json(self):
         data = self.board.json_visualize()
