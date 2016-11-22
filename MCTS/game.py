@@ -119,7 +119,7 @@ class ConnectFourBoard(Board):
     [RED_IMG,BLACK_IMG,BOARD_IMG] = [pygame.transform.scale(pygame.image.load(p),(SPACESIZE,SPACESIZE)) for p in [redPath,blackPath,boardPath]]
 
 
-    def __init__(self, state=None, turn=None):
+    def __init__(self, state=None, turn=None, display=True):
         """
         params:
         state - the board state represented as nested lists
@@ -137,9 +137,7 @@ class ConnectFourBoard(Board):
 
 
         #Visualize as Image Init
-        pygame.init()
-        self.window = pygame.display.set_mode((ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT))
-        pygame.display.set_caption('Connect 4')
+        self.has_display = display
         
     def get_legal_actions(self):
         actions = set()
@@ -290,6 +288,9 @@ class ConnectFourBoard(Board):
         '''
         uses pygame to visualize image and returns a 3d np array.
         '''
+        pygame.init()
+        self.window = pygame.display.set_mode((ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT))
+        pygame.display.set_caption('Connect 4')
         self.window.fill(ConnectFourBoard.BGCOLOR)
 
         spaceRect = pygame.Rect(0, 0, ConnectFourBoard.SPACESIZE, ConnectFourBoard.SPACESIZE)

@@ -29,7 +29,7 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
             else:
                 losses +=1
         if verbose:
-            print "For %f-second UCT, won %d, tied %d, lost %d" % (time_limit,wins,ties,losses)
+            print "For %.2f-second UCT, won %d, tied %d, lost %d" % (time_limit,wins,ties,losses)
         score.append(float(wins)/GAMES_PER_DIFFICULTY)
 
     return score
