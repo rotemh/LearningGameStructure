@@ -5,11 +5,12 @@ from keras.utils import np_utils
 import numpy as np
 
 class ReinforcementLearningAgent:
-  def __init__(self,img_size,num_actions):
+  def __init__(self,img_shape,num_actions):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
     
+    self.create_supervised_policy_model()
 
     """
     # define the policy network
@@ -32,9 +33,8 @@ class ReinforcementLearningAgent:
     self.policy_network.fit( s, nb_epoch= 1 ) 
   """
 
-  def supervised_policy_model(self):
+  def create_supervised_policy_model(self):
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
-    self.num_actions  = num_actions
     kernel_size = 3
 
     sup_network_h0 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(s_img)
@@ -43,12 +43,13 @@ class ReinforcementLearningAgent:
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
     sup_network_h1 = Flatten()(sup_network_h1)
   
-    sup_network_a = Dense(num_actions,activation='softmax')(sup_network_h1) # different output layers for each action
+    sup_network_a = Dense(self.num_actions,activation='softmax')(sup_network_h1) # different output layers for each action
     V = sup_network_a
     self.sup_policy = Model(input =s_img,output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
 
-  def supervised_Q_model(self):
+  def create_supervised_Q_model(self):
+    raise NotImplementedError("Doesn't actually work yet")
     state = Input(shape=self.state_size)
     next_state = Input(shape=self.state_size)
     action = Input(shape=(1,), dtype='int32')
@@ -56,7 +57,7 @@ class ReinforcementLearningAgent:
     transition = Input(shape=(1,), dtype='int32')
     self.value_network = Sequential() 
     self.value_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
-     input_shape=(img_size,img_size,3), subsample=(4,4), activation='relu') )
+     input_shape=self.image_shape, subsample=(4,4), activation='relu') )
     self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,\
      subsample=(2,2), activation='relu') )
     self.value_network.add(Flatten())

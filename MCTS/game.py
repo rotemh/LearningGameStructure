@@ -134,10 +134,6 @@ class ConnectFourBoard(Board):
             self.turn = turn
 
         self.last_move = None
-
-
-        #Visualize as Image Init
-        self.has_display = display
         
     def get_legal_actions(self):
         actions = set()
