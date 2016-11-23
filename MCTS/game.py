@@ -511,6 +511,8 @@ class RLPlayer(Player):
         return col_action
     raise IllegalArgumentException("This should never have occurred, the game is already over")
 
+  
+
 class Node(object):
     """
     A class that represents nodes in the MCTS tree.

@@ -4,6 +4,9 @@ from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 from keras import backend as K
 from keras.callbacks import *
+from keras.preprocessing.image import ImageDataGenerator
+
+import os
 import numpy as np
 
 class ReinforcementLearningAgent:
@@ -36,19 +39,42 @@ class ReinforcementLearningAgent:
   """
 
   def create_supervised_policy_model(self):
+    conv_init = 'lecun_uniform'
+    dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
+    id_input = Input( shape=(1,),name='player_id',dtype='float32')
     kernel_size = 2
 
-    sup_network_h0 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(s_img)
+    sup_network_h0 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same', init=conv_init)(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
-    sup_network_h1 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(sup_network_h0)
-    sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
-    sup_network_h1 = Flatten()(sup_network_h1)
+
+    sup_network_h1 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h0)
+    sup_network_h1 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
+
+    sup_network_h2 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h1)
+    sup_network_h2 = MaxPooling2D(pool_size=(2,2))(sup_network_h2)
+
+    sup_network_h2 = Flatten()(sup_network_h1)
   
-    sup_network_a = Dense(self.num_actions,activation='softmax')(sup_network_h1) # different output layers for each action
+    sup_network_merge = merge([sup_network_h2,id_input],mode='concat')
+    sup_network_a = Dense(self.num_actions,activation='softmax',
+                            init=dense_init)(sup_network_merge)
     V = sup_network_a
-    self.sup_policy = Model(input =s_img,output=V)
-    self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
+    self.sup_policy = Model(input =[s_img,id_input],output=V)
+    self.sup_policy.compile(loss='categorical_crossentropy',
+                            optimizer='adadelta',
+                            metrics =['accuracy']
+                            )
+    self.sup_policy.summary()
 
   def create_supervised_Q_model(self):
     raise NotImplementedError("Doesn't actually work yet")
@@ -59,7 +85,9 @@ class ReinforcementLearningAgent:
     reward = Input(shape=(1,), dtype='float32')
     transition = Input(shape=(1,), dtype='int32')
     self.value_network = Sequential() 
-    self.value_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
+    self.value_network.add( Convolution2D(nb_filter = 16,
+                                          nb_row=kernel_size,
+                                          nb_col=kernel_size,\
      input_shape=self.image_shape, subsample=(4,4), activation='relu') )
     self.value_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,\
      subsample=(2,2), activation='relu') )
@@ -68,19 +96,34 @@ class ReinforcementLearningAgent:
     self.value_network.add( Dense(self.num_actions))
     self.value_network.compile(loss = 'mse',optimizer='adam')
 
-  def update_supervised_policy(self,state,a):
+  def update_supervised_policy(self,state,a,player_id):
+    state =state.astype('float32')
+    a =a.astype('float32')
+    player_id = player_id.astype('float32')
+    player_id = player_id.reshape((np.shape(player_id)[0], ))
+    self.datagen = ImageDataGenerator(
+      featurewise_center=True,
+      featurewise_std_normalization=True)
+    self.datagen.fit(state)
+
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
-    early = EarlyStopping(monitor='loss', patience=20, verbose=0, mode='auto')
-    self.sup_policy.fit(state,action,nb_epoch=100,callbacks=[early])
+    early = EarlyStopping(monitor='val_loss', patience=20, verbose=0, mode='auto')
+    state = self.datagen.standardize(state)
     weight_fname = './policyWeights/sup/supweights.h5'
     if os.path.exists(weight_fname):
-      #overwrite = bool(int(raw_input('Overwrite sup weights?')))
-      ovewrite=True
-      if overwrite:
-        self.sup_policy.save_weights('./policyWeights/sup/supweights.h5')
-      else:
-        return
+      overwrite = bool(int(raw_input('Overwrite sup weights?')))
+    else:
+      overwrite = True
+    if overwrite:
+      self.sup_policy.fit([state,player_id],action,nb_epoch=100,
+                          callbacks=[early],
+                          batch_size = 32,
+                          validation_split = 0.1
+                          )
+      self.sup_policy.save_weights(weight_fname)
+    else:
+      self.sup_policy.load_weights(weight_fname)
   
   def update_value_network(self,s,v):
     self.value_network.fit( s,v,nb_epoch=100 )
@@ -95,6 +138,7 @@ class ReinforcementLearningAgent:
     is not set to supervised since there is no policy_network
     '''
     s = np.asarray(s)
+    s=self.datagen.standardize(s)
 
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
