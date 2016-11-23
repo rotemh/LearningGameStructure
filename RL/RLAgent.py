@@ -15,7 +15,7 @@ import os
 import scipy.io as sio
 
 class ReinforcementLearningAgent:
-  def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=.999999):
+  def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=1):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
@@ -70,9 +70,9 @@ class ReinforcementLearningAgent:
 
   def create_Q_model(self):
     self.Q_network = Sequential()
-    self.Q_network.add(Input( shape=self.img_shape,name='s_img',dtype='float32'))
+    kernel_size = 2
     self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
-     input_shape=self.image_shape, subsample=(4,4), activation='relu') )
+     input_shape=self.image_shape, subsample=(4,4), activation='relu', input_dim=self.img_shape) )
     self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
      input_shape=self.image_shape, subsample=(4,4), activation='relu') )
     self.Q_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,\
@@ -182,12 +182,12 @@ class ReinforcementLearningAgent:
         self.sup_policy.save_weights('./policyWeights/sup/supweights.h5')
       else:
         return
-  
-  def update_Q_network(self,s,v):
-    self.Q_network.fit( s,v,nb_epoch=100 )
 
-  def predict_value(self,s):
+  def predict_supervised_Q_value(self,s):
     return self.Q_network.predict(s)
+
+  def predict_action_from_supervised_Q(self,s):
+    return np.argmax(self.Q_network.predict(s))
 
   def predict_action(self,s,policy='supervised'):
     '''

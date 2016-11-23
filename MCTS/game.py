@@ -505,7 +505,7 @@ class RLPlayer(Player):
     board_img = board.visualize_image()
     legal_actions = board.get_legal_actions()
     if len(legal_actions) > 0:
-        column_prob_dist = self.agent.predict_action(board_img)
+        column_prob_dist = self.agent.predict_action_from_supervised_Q(board_img)
         legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
         col_action = np.argmax(legal_column_prob_dist) 
         return col_action
