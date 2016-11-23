@@ -6,6 +6,7 @@ import scipy.io as sio
 import os
 import sys
 import threading
+from tester import test_policy_vs_MCTS
 
 def generate_supervised_training_data(episode_num, time_limit=0.5, file_path=''):
   train_data= []
@@ -21,20 +22,25 @@ def load_supervised_training_data( train_dir ):
   train_files = os.listdir(train_dir)
   
   s_data = []
-  a = []
+  a1 = []
+  a2 = []
   sprime_data = []
   reward = []
+  player_id = []
   for f in train_files:
     try:
       data = sio.loadmat( train_dir+'/'+f )['train_data']
-      s_data += [data[0][1]]
-      a += [data[0][2][0][0][1][0][0]] # col
-      sprime_data += [data[0][3]]
-      reward += [data[0][4]]
+      for i in range(data.shape[0]):
+        s_data += [data[i][1]]
+        a1 += [data[i][2][0][0][1][0][0]] # col
+        a2 += [data[i][2][0][0][2][0][0]] # row
+        sprime_data += [data[i][3]]
+        reward += [data[i][4]]
+        player_id += [data[i][0]]
     except:
       # some files corrupted
       continue
-  return np.asarray(s_data),np.asarray(a)
+  return np.asarray(s_data),np.asarray(a1),np.asarray(a2),np.asarray(player_id)
 
 def main():
   if len(sys.argv) < 2:
@@ -44,11 +50,6 @@ def main():
 
   generate_supervised_training_data(num_of_episodes)
 
-  # obtain training data
-  # s_data,a = load_supervised_training_data('./train_data')
-  # rl_agent = ReinforcementLearningAgent(144,8)
-  # rl_agent.update_supervised_policy(s_data,a)
-  # episode = generate_custom_policy_game(rl_agent,rl_agent)
 
 if __name__ == '__main__':
     main()
