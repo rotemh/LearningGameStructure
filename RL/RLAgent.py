@@ -10,15 +10,25 @@ elif K.backend == 'theano':
   from theano.gradient import disconnected_grad
 from keras.callbacks import *
 import numpy as np
+import random
 
 class ReinforcementLearningAgent:
-  def __init__(self,img_shape,num_actions,future_discount=.999999):
+  def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=.999999):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
     
+    if training_data_path is not None:
+      self.training_data_path = training_data_path
+    else:
+      self.training_data_path = '../train_data/'
+
+    print("test")
+    print(self.getRandomEpisode() )#Test
+
     self.create_supervised_policy_model()
     self.future_discount = future_discount
+
 
   """
     # define the policy network
@@ -76,7 +86,7 @@ class ReinforcementLearningAgent:
     reward = Input(shape=(1,), dtype='float32')
     terminal = Input(shape=(1,), dtype='int32') # 0 if not terminal, 1 if yes
 
-    create_Q_model()
+    self.create_Q_model()
     state_value = self.Q_network(state)
     if K.backend == 'tensorflow':
       next_state_value = stop_gradient(self.Q_network(next_state))
@@ -105,7 +115,33 @@ class ReinforcementLearningAgent:
       episode = random.randint(0,N-1)
     raise NotImplementedError
 
+  def getRandomEpisode(self):
+    """
+    gets a given episode
+    """
+    train_files = os.listdir(self.training_data_path)
+    game = random.choice(train_files)
+    gotData = False
 
+    while not gotData:
+      step = random.randint(0, data.shape[0]-1)
+
+      try:
+        data = sio.loadmat( train_dir+'/'+f )['train_data']
+        player = data[i][0]
+        state = data[i][1]
+        action = data[i][2][0][0][1][0][0] # col
+        next_state = data[i][3]
+        reward = data[i][4][player]
+        terminal = 1 if reward > 0 else 0
+        gotData = True
+      except:
+        # corrupted file
+        continue
+
+    return [state, next_state, action, reward, terminal]
+
+    
 
 
   def update_supervised_policy(self,state,a):
