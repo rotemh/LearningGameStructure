@@ -10,9 +10,12 @@ elif K.backend == 'theano':
   from theano.gradient import disconnected_grad
 from keras.callbacks import *
 import numpy as np
+import random
+import os 
+import scipy.io as sio
 
 class ReinforcementLearningAgent:
-  def __init__(self,img_shape,num_actions,future_discount=.999999):
+  def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=.999999):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
@@ -20,6 +23,14 @@ class ReinforcementLearningAgent:
 
     self.create_supervised_Q_cost_function()
     self.create_supervised_policy_model()
+    
+    if training_data_path is not None:
+      self.training_data_path = training_data_path
+    else:
+      self.training_data_path = '../train_data/'
+
+    print("test")
+    print(self.getRandomEpisode() )#Test
 
   """
     # define the policy network
@@ -129,6 +140,35 @@ class ReinforcementLearningAgent:
     cost = self.train_Q_fn(state, new_state, action, reward, terminal)
     return cost
 
+  def getRandomEpisode(self):
+    """
+    gets a given episode
+    """
+    train_files = os.listdir(self.training_data_path)
+    game = random.choice(train_files)
+    gotData = False
+
+    while not gotData:
+      game = random.choice(train_files)
+      try:
+        data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
+        gotData = True
+      except:
+        # corrupted file
+        continue
+
+    i = random.randint(0, data.shape[0]-1)
+    player = data[i][0]
+    state = data[i][1]
+    action = data[i][2][0][0][1][0][0] # col
+    next_state = data[i][3]
+    reward = data[i][4][0][player]
+    print(reward)
+    terminal = 1 if reward != 0 else 0
+    gotData = True
+
+    return [state, next_state, action, reward, terminal]
+
   def update_supervised_policy(self,state,a):
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
@@ -169,4 +209,6 @@ class ReinforcementLearningAgent:
   def q_learning_Q_network(self,s,sprime,a,r):
     #NOTE: not sure if we need this
     pass
-  
+
+
+#a = ReinforcementLearningAgent((144,144,3),8)  
