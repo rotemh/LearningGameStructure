@@ -633,8 +633,11 @@ class Simulation(object):
 
     def run(self, visualize=False, json_visualize=False, state_action_history=False):
         self.game_id = str(random.randint(0,3133337))
-
-        while not self.board.is_terminal():
+        
+        last = False
+        while not last:
+            if self.board.is_terminal():
+                last = True
             old_board = self.board
             if visualize:
                 self.board.visualize()
