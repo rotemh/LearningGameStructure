@@ -11,6 +11,8 @@ elif K.backend == 'theano':
 from keras.callbacks import *
 import numpy as np
 import random
+import os 
+import scipy.io as sio
 
 class ReinforcementLearningAgent:
   def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=.999999):
@@ -124,20 +126,23 @@ class ReinforcementLearningAgent:
     gotData = False
 
     while not gotData:
-      step = random.randint(0, data.shape[0]-1)
-
+      game = random.choice(train_files)
       try:
-        data = sio.loadmat( train_dir+'/'+f )['train_data']
-        player = data[i][0]
-        state = data[i][1]
-        action = data[i][2][0][0][1][0][0] # col
-        next_state = data[i][3]
-        reward = data[i][4][player]
-        terminal = 1 if reward > 0 else 0
+        data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
         gotData = True
       except:
         # corrupted file
         continue
+
+    i = random.randint(0, data.shape[0]-1)
+    player = data[i][0]
+    state = data[i][1]
+    action = data[i][2][0][0][1][0][0] # col
+    next_state = data[i][3]
+    reward = data[i][4][0][player]
+    print(reward)
+    terminal = 1 if reward != 0 else 0
+    gotData = True
 
     return [state, next_state, action, reward, terminal]
 
@@ -184,4 +189,6 @@ class ReinforcementLearningAgent:
   def q_learning_Q_network(self,s,sprime,a,r):
     #NOTE: not sure if we need this
     pass
-  
+
+
+#a = ReinforcementLearningAgent((144,144,3),8)  
