@@ -16,9 +16,10 @@ class ReinforcementLearningAgent:
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
-    
-    self.create_supervised_policy_model()
     self.future_discount = future_discount
+
+    self.create_supervised_Q_cost_function()
+    self.create_supervised_policy_model()
 
   """
     # define the policy network
@@ -57,7 +58,8 @@ class ReinforcementLearningAgent:
     self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
 
   def create_Q_model(self):
-    self.Q_network = Sequential() 
+    self.Q_network = Sequential()
+    self.Q_network.add(Input( shape=self.img_shape,name='s_img',dtype='float32'))
     self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
      input_shape=self.image_shape, subsample=(4,4), activation='relu') )
     self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
@@ -76,7 +78,7 @@ class ReinforcementLearningAgent:
     reward = Input(shape=(1,), dtype='float32')
     terminal = Input(shape=(1,), dtype='int32') # 0 if not terminal, 1 if yes
 
-    create_Q_model()
+    self.create_Q_model()
     state_value = self.Q_network(state)
     if K.backend == 'tensorflow':
       next_state_value = stop_gradient(self.Q_network(next_state))
@@ -92,21 +94,40 @@ class ReinforcementLearningAgent:
     opt = RMSprop(.0001)
     params = self.Q_network.trainable_weights
     updates = opt.get_updates(params, [], cost)
-    self.train_fn = K.function([state, next_state, action, reward, terminal], cost, updates=updates)
+    self.train_Q_fn = K.function([state, next_state, action, reward, terminal], cost, updates=updates)
 
-  def update_supervised_Q(self,episodes, minibatch_size):
+  def train_supervised_Q(self, num_batches=1000, minibatch_size=32):
+    SAVE_FREQUENCY=100
+    current_cost = np.inf
+    for i in xrange(num_batches):
+      print("Updating batch %d, current error: %f")%(i,current_cost)
+      current_cost = self.update_batch_supervised_Q()
+      if i%SAVE_FREQUENCY == 0:
+        self.Q_network.save_weights('./qWeights/sup/supweights.h5')
+    self.Q_network.save_weights('./qWeights/sup/supweights.h5')
+
+  def update_batch_supervised_Q(self, minibatch_size=32):
     """
     Updates the self.Q_network
 
     each episode - [state, next_state, action, reward, terminal]
     """
-    N = len(episodes)
-    for i in xrange(N):
-      episode = random.randint(0,N-1)
-    raise NotImplementedError
+    state = numpy.zeros((self.mbsz,) + self.state_size)
+    new_state = numpy.zeros((self.mbsz,) + self.state_size)
+    action = numpy.zeros((self.mbsz, 1), dtype=numpy.int32)
+    reward = numpy.zeros((self.mbsz, 1), dtype=numpy.float32)
+    terminal = numpy.zeros((self.mbsz, 1), dtype=numpy.int32)
+    for i in xrange(minibatch_size):
+      # TODO: get this from a random episode
+      s, ns, a, r, t = self.get_random_episode()
+      state[i] = s
+      new_state[i] = ns
+      action[i] = a
+      reward[i] = r
+      terminal[i] = t
 
-
-
+    cost = self.train_Q_fn(state, new_state, action, reward, terminal)
+    return cost
 
   def update_supervised_policy(self,state,a):
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
