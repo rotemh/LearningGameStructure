@@ -9,6 +9,9 @@ if K.backend == 'tensorflow':
 elif K.backend == 'theano':
   from theano.gradient import disconnected_grad
 from keras.callbacks import *
+from keras.preprocessing.image import ImageDataGenerator
+
+import os
 import numpy as np
 import random
 import os 
@@ -19,9 +22,7 @@ class ReinforcementLearningAgent:
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
-    self.future_discount = future_discount
 
-    self.create_supervised_Q_cost_function()
     self.create_supervised_policy_model()
     
     if training_data_path is not None:
@@ -29,165 +30,73 @@ class ReinforcementLearningAgent:
     else:
       self.training_data_path = '../train_data/'
 
-    print("test")
-    print(self.getRandomEpisode() )#Test
-
-  """
-    # define the policy network
-    import theano.tensor as T
-    def policy_network_loss_func( y, y_pred, base_line ):
-      # TODO: something is wrong here; we would like to increase the probability of action that has high advantage value. Comeback later
-      return -T.log(y_pred) * base_line 
-    policy_network_loss_with_baseline = partial(policy_network_loss_func,base_line= self.Q_network)
-    policy_network_loss_with_baseline.__name__ = ' policy_network_loss_with_baseline'
-
-    self.policy_network = Sequential()
-    self.policy_network.add( Convolution2D(nb_filters = 32,kernel_dim1=kernel_size,kernel_dim2=kernel_size, input_dim=(img_size,img_size,3)) )
-    self.policy_network.add( Convolution2D(nb_filters = 32,kernel_dim1=kernel_size,kernel_dim2=kernel_size) )
-    self.policy_network.add( Convolution2D(nb_filters = 32,kernel_dim1=kernel_size,kernel_dim2=kernel_size) )
-    self.policy_network.add( Dense(num_actions,activation='softmax') )
-    self.policy_network.compile(loss = policy_network_with_baseline, optimizer='adam')
-
-  def update_policy_network(s,sprime,a,r):  
-    # TODO: make sure you use sprime, a, and r to caculate the gradient; something is wrong here right now
-    self.policy_network.fit( s, nb_epoch= 1 ) 
-  """
-
   def create_supervised_policy_model(self):
+    conv_init = 'lecun_uniform'
+    dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
+    id_input = Input( shape=(1,),name='player_id',dtype='float32')
     kernel_size = 2
 
-    sup_network_h0 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(s_img)
+    sup_network_h0 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same', init=conv_init)(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
-    sup_network_h1 = Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size, border_mode='same')(sup_network_h0)
-    sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
-    sup_network_h1 = Flatten()(sup_network_h1)
+
+    sup_network_h1 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h0)
+    sup_network_h1 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
+
+    sup_network_h2 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h1)
+    sup_network_h2 = MaxPooling2D(pool_size=(2,2))(sup_network_h2)
+
+    sup_network_h2 = Flatten()(sup_network_h1)
   
-    sup_network_a = Dense(self.num_actions,activation='softmax')(sup_network_h1) # different output layers for each action
+    sup_network_merge = merge([sup_network_h2,id_input],mode='concat')
+    sup_network_a = Dense(self.num_actions,activation='softmax',
+                            init=dense_init)(sup_network_merge)
     V = sup_network_a
-    self.sup_policy = Model(input =s_img,output=V)
-    self.sup_policy.compile(loss='categorical_crossentropy',optimizer='adadelta')
+    self.sup_policy = Model(input =[s_img,id_input],output=V)
+    self.sup_policy.compile(loss='categorical_crossentropy',
+                            optimizer='adadelta',
+                            metrics =['accuracy']
+                            )
+    self.sup_policy.summary()
 
-  def create_Q_model(self):
-    self.Q_network = Sequential()
-    kernel_size = 2
-    self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
-     input_shape=self.image_shape, subsample=(4,4), activation='relu', input_dim=self.img_shape) )
-    self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
-     input_shape=self.image_shape, subsample=(4,4), activation='relu') )
-    self.Q_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,\
-     subsample=(2,2), activation='relu') )
-    self.Q_network.add(Flatten())
-    self.Q_network.add( Dense(256,activation='relu'))
-    self.Q_network.add( Dense(self.num_actions))
-    self.Q_network.compile(loss = 'mse',optimizer='adam')
 
-  def create_supervised_Q_cost_function(self):
-    state = Input(shape=self.img_shape, dtype='float32')
-    next_state = Input(shape=self.img_shape, dtype='float32')
-    action = Input(shape=(1,), dtype='int32')
-    reward = Input(shape=(1,), dtype='float32')
-    terminal = Input(shape=(1,), dtype='int32') # 0 if not terminal, 1 if yes
+  def update_supervised_policy(self,state,a,player_id):
+    state =state.astype('float32')
+    a =a.astype('float32')
+    player_id = player_id.astype('float32')
+    player_id = player_id.reshape((np.shape(player_id)[0], ))
+    self.datagen = ImageDataGenerator(
+      featurewise_center=True,
+      featurewise_std_normalization=True)
+    self.datagen.fit(state)
 
-    self.create_Q_model()
-    state_value = self.Q_network(state)
-    if K.backend == 'tensorflow':
-      next_state_value = stop_gradient(self.Q_network(next_state))
-    elif K.backend == 'theano':
-      next_state_value = disconnected_grad(self.Q_network(next_state))
-    else:
-      raise IllegalArgumentException("Must have one of these two backends, tensorflow or theano")
-
-    future_value = (1-terminal) * next_state_value.max(axis=1, keepdims=True) # 0 if terminal, otherwise best next move
-    discounted_future_value = self.future_discount*future_value
-    target = reward + discounted_future_value
-    cost = ((state_value[:,action] - target)**2).mean()
-    opt = RMSprop(.0001)
-    params = self.Q_network.trainable_weights
-    updates = opt.get_updates(params, [], cost)
-    self.train_Q_fn = K.function([state, next_state, action, reward, terminal], cost, updates=updates)
-
-  def train_supervised_Q(self, num_batches=1000, minibatch_size=32):
-    SAVE_FREQUENCY=100
-    current_cost = np.inf
-    for i in xrange(num_batches):
-      print("Updating batch %d, current error: %f")%(i,current_cost)
-      current_cost = self.update_batch_supervised_Q()
-      if i%SAVE_FREQUENCY == 0:
-        self.Q_network.save_weights('./qWeights/sup/supweights.h5')
-    self.Q_network.save_weights('./qWeights/sup/supweights.h5')
-
-  def update_batch_supervised_Q(self, minibatch_size=32):
-    """
-    Updates the self.Q_network
-
-    each episode - [state, next_state, action, reward, terminal]
-    """
-    state = numpy.zeros((self.mbsz,) + self.state_size)
-    new_state = numpy.zeros((self.mbsz,) + self.state_size)
-    action = numpy.zeros((self.mbsz, 1), dtype=numpy.int32)
-    reward = numpy.zeros((self.mbsz, 1), dtype=numpy.float32)
-    terminal = numpy.zeros((self.mbsz, 1), dtype=numpy.int32)
-    for i in xrange(minibatch_size):
-      # TODO: get this from a random episode
-      s, ns, a, r, t = self.get_random_episode()
-      state[i] = s
-      new_state[i] = ns
-      action[i] = a
-      reward[i] = r
-      terminal[i] = t
-
-    cost = self.train_Q_fn(state, new_state, action, reward, terminal)
-    return cost
-
-  def getRandomEpisode(self):
-    """
-    gets a given episode
-    """
-    train_files = os.listdir(self.training_data_path)
-    game = random.choice(train_files)
-    gotData = False
-
-    while not gotData:
-      game = random.choice(train_files)
-      try:
-        data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
-        gotData = True
-      except:
-        # corrupted file
-        continue
-
-    i = random.randint(0, data.shape[0]-1)
-    player = data[i][0]
-    state = data[i][1]
-    action = data[i][2][0][0][1][0][0] # col
-    next_state = data[i][3]
-    reward = data[i][4][0][player]
-    print(reward)
-    terminal = 1 if reward != 0 else 0
-    gotData = True
-
-    return [state, next_state, action, reward, terminal]
-
-  def update_supervised_policy(self,state,a):
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
-    early = EarlyStopping(monitor='loss', patience=20, verbose=0, mode='auto')
-    self.sup_policy.fit(state,action,nb_epoch=100,callbacks=[early])
+    early = EarlyStopping(monitor='val_loss', patience=20, verbose=0, mode='auto')
+    state = self.datagen.standardize(state)
     weight_fname = './policyWeights/sup/supweights.h5'
     if os.path.exists(weight_fname):
-      #overwrite = bool(int(raw_input('Overwrite sup weights?')))
-      ovewrite=True
-      if overwrite:
-        self.sup_policy.save_weights('./policyWeights/sup/supweights.h5')
-      else:
-        return
-
-  def predict_supervised_Q_value(self,s):
-    return self.Q_network.predict(s)
-
-  def predict_action_from_supervised_Q(self,s):
-    return np.argmax(self.Q_network.predict(s))
+      overwrite = bool(int(raw_input('Overwrite sup weights?')))
+    else:
+      overwrite = True
+    if overwrite:
+      self.sup_policy.fit([state,player_id],action,nb_epoch=100,
+                          callbacks=[early],
+                          batch_size = 32,
+                          validation_split = 0.1
+                          )
+      self.sup_policy.save_weights(weight_fname)
+    else:
+      self.sup_policy.load_weights(weight_fname)
 
   def predict_action(self,s,policy='supervised'):
     '''
@@ -196,6 +105,7 @@ class ReinforcementLearningAgent:
     is not set to supervised since there is no policy_network
     '''
     s = np.asarray(s)
+    s=self.datagen.standardize(s)
 
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
@@ -206,9 +116,6 @@ class ReinforcementLearningAgent:
     else:
         return self.policy_network.predict(s)
 
-  def q_learning_Q_network(self,s,sprime,a,r):
-    #NOTE: not sure if we need this
-    pass
 
 
 #a = ReinforcementLearningAgent((144,144,3),8)  

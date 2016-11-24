@@ -14,6 +14,9 @@ import pygame
 import numpy as np
 import scipy.io as sio
 
+from PIL import Image, ImageDraw
+
+
 class Board(object):
     """
     This class represents an instantaneous board
@@ -116,10 +119,10 @@ class ConnectFourBoard(Board):
     redPath = './MCTS/4row_red.png'
     blackPath = './MCTS/4row_black.png'
     boardPath = './MCTS/4row_board.png'
-    [RED_IMG,BLACK_IMG,BOARD_IMG] = [pygame.transform.scale(pygame.image.load(p),(SPACESIZE,SPACESIZE)) for p in [redPath,blackPath,boardPath]]
+    [RED_IMG,BLACK_IMG,BOARD_IMG] = [Image.open(p).resize((SPACESIZE,SPACESIZE)) for p in [redPath,blackPath,boardPath]]
 
 
-    def __init__(self, state=None, turn=None, display=True):
+    def __init__(self, state=None, turn=None):
         """
         params:
         state - the board state represented as nested lists
@@ -282,37 +285,28 @@ class ConnectFourBoard(Board):
 
     def visualize_image(self, imgName='NULL', saveImgFile=False):
         '''
-        uses pygame to visualize image and returns a 3d np array.
+        uses pillow to visualize image and returns a 3d np array.
         '''
-        pygame.init()
-        self.window = pygame.display.set_mode((ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT))
-        pygame.display.set_caption('Connect 4')
-        self.window.fill(ConnectFourBoard.BGCOLOR)
-
-        spaceRect = pygame.Rect(0, 0, ConnectFourBoard.SPACESIZE, ConnectFourBoard.SPACESIZE)
+        img = Image.new('RGB', (ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT), color=ConnectFourBoard.BGCOLOR)
         getSpaceRectCoords = lambda x, y: (ConnectFourBoard.XMARGIN + (x * ConnectFourBoard.SPACESIZE), 
             (y * ConnectFourBoard.SPACESIZE) - ConnectFourBoard.YMARGIN )
+            
         for x in xrange(ConnectFourBoard.NUM_COLS):
             for y in reversed(xrange(ConnectFourBoard.NUM_ROWS)):
-                spaceRect.topleft = getSpaceRectCoords(x, ConnectFourBoard.NUM_ROWS - y)
+                top_left = getSpaceRectCoords(x, ConnectFourBoard.NUM_ROWS - y)
                 if self.state[x][y] == ConnectFourBoard.RED:
-                    self.window.blit(ConnectFourBoard.RED_IMG, spaceRect)
+                    img.paste(ConnectFourBoard.RED_IMG, top_left)
                 elif self.state[x][y] == ConnectFourBoard.BLACK:
-                    self.window.blit(ConnectFourBoard.BLACK_IMG, spaceRect)
-                self.window.blit(ConnectFourBoard.BOARD_IMG, spaceRect)
-
-
-        board_img = surfarray.array3d(self.window)
+                    img.paste(ConnectFourBoard.BLACK_IMG, top_left)
+                img.paste(ConnectFourBoard.BOARD_IMG, top_left, ConnectFourBoard.BOARD_IMG)
+        
+        board_img = np.transpose(np.asarray(img, dtype=np.uint8), (1,0,2))
         if saveImgFile:
-            pygame.display.update()
             completeImgName = imgName + ".jpeg"
-            #pygame.image.save(self.window, completeImgName)
+            img.save(completeImgName)
             sio.savemat(completeImgName,{'board_img':board_img})
-            
 
         return board_img
-
-
 
     def json_visualize(self):
         return {
@@ -652,13 +646,11 @@ class Simulation(object):
                 self.history.append((player_id, old_board.visualize_image(), action, self.board.visualize_image(), self.board.reward_vector()))
             else:
                 self.history.append((player_id, action))
-        
-        if json_visualize:
-            self.write_visualization_json()
+       
         if state_action_history:
             return self.history
-        else:
-            return self.board.reward_vector()[0] # 1 if player 1 won, 0 if tie, -1 if loss
+        if json_visualize:
+            self.write_visualization_json()
 
     def write_visualization_json(self):
         data = self.board.json_visualize()
