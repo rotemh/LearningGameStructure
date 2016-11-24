@@ -24,7 +24,7 @@ class SupervisedQAgent:
     self.num_actions = num_actions # overall number of actions one could apply
     self.future_discount = future_discount
 
-    self.create_supervised_Q_cost_function()
+    self.create_cost_function()
     
     if training_data_path is not None:
       self.training_data_path = training_data_path
@@ -34,7 +34,7 @@ class SupervisedQAgent:
     print("test")
     print(self.get_random_episode() )#Test
 
-  def create_Q_model(self):
+  def create_model(self):
     conv_init = 'lecun_uniform'
     dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
@@ -72,14 +72,14 @@ class SupervisedQAgent:
                             )
     self.Q_network.summary()
 
-  def create_supervised_Q_cost_function(self):
+  def create_cost_function(self):
     state = Input(shape=self.img_shape, dtype='float32')
     next_state = Input(shape=self.img_shape, dtype='float32')
     action = Input(shape=(1,), dtype='int32')
     reward = Input(shape=(1,), dtype='float32')
     terminal = Input(shape=(1,), dtype='int32') # 0 if not terminal, 1 if yes
 
-    self.create_Q_model()
+    self.create_model()
     state_value = self.Q_network(state)
     if K.backend == 'tensorflow':
       next_state_value = stop_gradient(self.Q_network(next_state))
@@ -97,17 +97,17 @@ class SupervisedQAgent:
     updates = opt.get_updates(params, [], cost)
     self.train_Q_fn = K.function([state, next_state, action, reward, terminal], cost, updates=updates)
 
-  def train_supervised_Q(self, num_batches=1000, minibatch_size=32):
+  def train(self, num_batches=1000, minibatch_size=32):
     SAVE_FREQUENCY=100
     current_cost = np.inf
     for i in xrange(num_batches):
       print("Updating batch %d, current error: %f")%(i,current_cost)
-      current_cost = self.update_batch_supervised_Q()
+      current_cost = self.update_batch()
       if i%SAVE_FREQUENCY == 0:
         self.Q_network.save_weights('./qWeights/sup/supweights.h5')
     self.Q_network.save_weights('./qWeights/sup/supweights.h5')
 
-  def update_batch_supervised_Q(self, minibatch_size=32):
+  def update_batch(self, minibatch_size=32):
     """
     Updates the self.Q_network with a single minibatch of frames
     Each frame goes from state to new_state, using action "action", with reward "reward"
@@ -181,10 +181,3 @@ class SupervisedQAgent:
   def predict_action(self,s):
     return np.argmax(self.Q_network.predict(s))
 
-
-  def q_learning_Q_network(self,s,sprime,a,r):
-    #NOTE: not sure if we need this
-    pass
-
-
-#a = ReinforcementLearningAgent((144,144,3),8)  
