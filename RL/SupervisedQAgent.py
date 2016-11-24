@@ -17,7 +17,7 @@ import random
 import os 
 import scipy.io as sio
 
-class ReinforcementLearningAgent:
+class SupervisedQAgent:
   def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=1):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
@@ -32,21 +32,45 @@ class ReinforcementLearningAgent:
       self.training_data_path = '../train_data/'
 
     print("test")
-    print(self.getRandomEpisode() )#Test
+    print(self.get_random_episode() )#Test
 
   def create_Q_model(self):
-    self.Q_network = Sequential()
+    conv_init = 'lecun_uniform'
+    dense_init = 'glorot_normal'
+    s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
+    id_input = Input( shape=(1,),name='player_id',dtype='float32')
     kernel_size = 2
-    self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
-     input_shape=self.image_shape, subsample=(4,4), activation='relu', input_dim=self.img_shape) )
-    self.Q_network.add( Convolution2D(nb_filter = 16,nb_row=kernel_size,nb_col=kernel_size,\
-     input_shape=self.image_shape, subsample=(4,4), activation='relu') )
-    self.Q_network.add( Convolution2D(nb_filter = 32,nb_row=kernel_size,nb_col=kernel_size,\
-     subsample=(2,2), activation='relu') )
-    self.Q_network.add(Flatten())
-    self.Q_network.add( Dense(256,activation='relu'))
-    self.Q_network.add( Dense(self.num_actions))
-    self.Q_network.compile(loss = 'mse',optimizer='adam')
+
+    sup_network_h0 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same', init=conv_init)(s_img)
+    sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
+
+    sup_network_h1 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h0)
+    sup_network_h1 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
+
+    sup_network_h2 = Convolution2D(nb_filter = 16,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h1)
+    sup_network_h2 = MaxPooling2D(pool_size=(2,2))(sup_network_h2)
+
+    sup_network_h2 = Flatten()(sup_network_h1)
+  
+    sup_network_merge = merge([sup_network_h2,id_input],mode='concat')
+    sup_network_a = Dense(self.num_actions,activation='softmax',
+                            init=dense_init)(sup_network_merge)
+    V = sup_network_a
+    self.Q_network = Model(input =[s_img,id_input],output=V)
+    self.Q_network.compile(loss='mse',
+                            optimizer='adadelta',
+                            metrics =['mse']
+                            )
+    self.Q_network.summary()
 
   def create_supervised_Q_cost_function(self):
     state = Input(shape=self.img_shape, dtype='float32')
@@ -85,7 +109,12 @@ class ReinforcementLearningAgent:
 
   def update_batch_supervised_Q(self, minibatch_size=32):
     """
-    Updates the self.Q_network
+    Updates the self.Q_network with a single minibatch of frames
+    Each frame goes from state to new_state, using action "action", with reward "reward"
+    If the state is terminal, "terminal" is True
+
+    These transitions are drawn in random order from a set of episodes 
+    here we draw minibatch_size%8 episodes at random
 
     each episode - [state, next_state, action, reward, terminal]
     """
@@ -94,19 +123,30 @@ class ReinforcementLearningAgent:
     action = numpy.zeros((self.mbsz, 1), dtype=numpy.int32)
     reward = numpy.zeros((self.mbsz, 1), dtype=numpy.float32)
     terminal = numpy.zeros((self.mbsz, 1), dtype=numpy.int32)
+
+    # Retrieve a bunch of episodes to extract transitions from them
+    num_episodes_to_retrieve = minibatch_size%8 # on average, 8 transitions from aech episode
+
+    episodes = []
+    for i in xrange(num_episodes_to_retrieve):
+      episode = self.get_random_episode()
+      episodes.append(episode)
+
+    # Now retrieve random samples from the different episodes
     for i in xrange(minibatch_size):
-      # TODO: get this from a random episode
-      s, ns, a, r, t = self.get_random_episode()
-      state[i] = s
-      new_state[i] = ns
-      action[i] = a
-      reward[i] = r
-      terminal[i] = t
+      episode = random.randint(0,len(episodes)-1)
+      s, ns, a, r, t = episodes[episode]
+      frame = random.randint(0,len(s)-1)
+      state[i] = s[frame]
+      new_state[i] = ns[frame]
+      action[i] = a[frame]
+      reward[i] = r[frame]
+      terminal[i] = t[frame]
 
     cost = self.train_Q_fn(state, new_state, action, reward, terminal)
     return cost
 
-  def getRandomEpisode(self):
+  def get_random_episode(self):
     """
     gets a given episode
     """
