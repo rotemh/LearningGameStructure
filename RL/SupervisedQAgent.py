@@ -122,7 +122,8 @@ class SupervisedQAgent:
       raise IllegalArgumentException("Must have one of these two backends, tensorflow or theano")
 
     # The below line calculates the optimal value starting from Q(next_s,*)
-    future_value = (1-terminal) * next_state_value.max(axis=1, keepdims=True) # 0 if terminal, otherwise best next move
+    # Note that this assumes the next state is the opponent's state, so it takes the opposite of that value
+    future_value = (1-terminal) * (-1)*next_state_value.max(axis=1, keepdims=True) # 0 if terminal, otherwise best next move
     discounted_future_value = self.future_discount*future_value # we aren't actually doing discounting, but this would discount future reward
     target = reward + discounted_future_value # this is what we want our Q value to add up to
     cost = ((state_value[:,action] - target)**2).mean() # take the MSE of our current value w.r.t. it
