@@ -10,6 +10,7 @@ from pygame.locals import *
 import pygame.surfarray as surfarray
 import pygame
 
+from random import randint
 
 import numpy as np
 import scipy.io as sio
@@ -23,7 +24,7 @@ class Board(object):
     state of a game in progress. Should be able
     to be copied to keep track of board histories.
     """
-
+    
     def __init__(self):
         raise NotImplemented
 
@@ -101,8 +102,9 @@ class ConnectFourBoard(Board):
     RED = 'R'
     BLACK = 'B'
     EMPTY = '-'
-    NUM_COLS = 8
-    NUM_ROWS = 8
+    NUM_COLS = 4
+    NUM_ROWS = 5
+    NUM_OF_TOKENS = 3
 
     #Image Visualization Parameters:
     SPACESIZE = 128/NUM_COLS #size of the tokens and board spaces in pixels; make it 128 by 128
@@ -128,7 +130,6 @@ class ConnectFourBoard(Board):
         state - the board state represented as nested lists
         turn - which color is to play next. either RED or BLACK
         """
-
         if state is None:
             self.state = [[ConnectFourBoard.EMPTY for j in xrange(ConnectFourBoard.NUM_ROWS)] for i in xrange(ConnectFourBoard.NUM_COLS)]
             self.turn = ConnectFourBoard.RED
@@ -177,8 +178,8 @@ class ConnectFourBoard(Board):
             return True
         
         # horizontal
-        min_col = max(0, col-3)
-        max_col = min(ConnectFourBoard.NUM_COLS-1, col+3)
+        min_col = max(0, col-ConnectFourBoard.NUM_OF_TOKENS-1)
+        max_col = min(ConnectFourBoard.NUM_COLS-1, col+ConnectFourBoard.NUM_OF_TOKENS-1)
         four_in_row = self._check_seq(color, [self.state[i][row] for i in xrange(min_col, max_col+1)])
         if four_in_row:
             return True
@@ -244,9 +245,9 @@ class ConnectFourBoard(Board):
     def _check_seq(self, color, seq):
         length = len(seq)
 
-        for i in xrange(length-3):
+        for i in xrange(length-ConnectFourBoard.NUM_OF_TOKENS-1):
             four = True
-            for j in xrange(4):
+            for j in xrange(ConnectFourBoard.NUM_OF_TOKENS):
                 if seq[i+j] != color:
                     four = False
                     break
@@ -283,7 +284,7 @@ class ConnectFourBoard(Board):
         print '  ' + ' '.join([str(col) for col in xrange(ConnectFourBoard.NUM_COLS)])
         print(self.visualize_image('test', True)[0][0])
 
-    def visualize_image(self, imgName='NULL', saveImgFile=False):
+    def visualize_image(self, imgName='NULL', saveImgFile=True):
         '''
         uses pillow to visualize image and returns a 3d np array.
         '''
@@ -302,7 +303,7 @@ class ConnectFourBoard(Board):
         
         board_img = np.transpose(np.asarray(img, dtype=np.uint8), (1,0,2))
         if saveImgFile:
-            completeImgName = imgName + ".jpeg"
+            completeImgName = "dataset/" + str(randint(1, 100000000000)) + ".jpeg"
             img.save(completeImgName)
             sio.savemat(completeImgName,{'board_img':board_img})
 

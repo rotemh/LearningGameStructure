@@ -1,13 +1,10 @@
 #!/usr/bin/python
 from MCTS.sim import *
-#from RL.RLAgent import *
-#from MCTS.game import * 
 import numpy as np
 import scipy.io as sio
 import os
 import sys
 import threading
-#from tester import test_policy_vs_MCTS
 from Queue import Queue
 from threading import Thread
 
