@@ -39,7 +39,7 @@ class SupervisedQAgent:
     if training_data_path is not None:
       self.training_data_path = training_data_path
     else:
-      self.training_data_path = '../train_data/'
+      self.training_data_path = 'train_data/'
 
     print("test")
     print(self.get_random_episode() )#Test
