@@ -10,7 +10,7 @@ import os
 def main():
 	agent = SupervisedQAgent((144,144,3),7)
 	agent.train()
-	player = RLPlayer(agent)
+	player = RLPlayer("supervisedq",agent)
 	tester.test_policy_vs_MCTS(player,verbose=True)
 
 if __name__ == '__main__':
