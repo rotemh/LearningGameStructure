@@ -176,12 +176,13 @@ class SupervisedQAgent:
     # Retrieve a bunch of episodes to extract transitions from them
     num_episodes_to_retrieve = minibatch_size%8 # on average, 8 transitions from each episode
 
-
+    print num_episodes_to_retrieve
     episodes = []
     for i in xrange(num_episodes_to_retrieve):
       episode = self.get_random_episode()
       episodes.append(episode)
 
+    print len(episodes)
     # Now retrieve random samples from the different episodes
     for i in xrange(minibatch_size):
       episode = random.randint(0,len(episodes)-1) # pick a random episode
