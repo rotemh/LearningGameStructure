@@ -93,8 +93,8 @@ class SupervisedQAgent:
   def create_cost_function(self):
     """
     Constructs the cost-function to be trained in the DQN
-    This cost function will be stored in self.train_Q_fn
-    and can be descended on by calling self.train_Q_fn(state, next_state, action, reward, terminal)
+    This cost function will be stored in self.train_fn
+    and can be descended on by calling self.train_fn(state, next_state, action, reward, terminal)
 
     The overall cost being encoded is:
     (current_reward - Q_opponent(next_state, best action) - Q(state, action))^2
@@ -134,7 +134,7 @@ class SupervisedQAgent:
     params = self.Q_network.trainable_weights
     updates = opt.get_updates(params, [], cost) # instantiates optimizer
     # the last line creates a callable function to run the optimizer for a given batch specified by those 5 arguments
-    self.train_Q_fn = K.function([state, next_state, action, reward, terminal, player], [cost], updates=updates)
+    self.train_fn = K.function([state, next_state, action, reward, terminal, player], [cost], updates=updates)
 
   def train(self, num_batches=1000, minibatch_size=32):
     """
@@ -194,7 +194,7 @@ class SupervisedQAgent:
 
     # train on the frames we just extracted
     # NOTE: there might be a better way to train on a custom function?
-    cost_list = self.train_Q_fn([state, new_state, action, reward, terminal, player])
+    cost_list = self.train_fn([state, new_state, action, reward, terminal, player])
     cost = cost_list[0] # weird quirk of keras requires us to return cost as single-element list
     return cost
 
@@ -260,9 +260,9 @@ class SupervisedQAgent:
     return [state, next_state, action, reward, terminal, player]
 
 
-  def predict_Q_value(self,s):
-    return self.Q_network.predict(s)
+  def predict_Q_value(self,s, player):
+    return self.Q_network.predict([s, player])
 
-  def predict_action(self,s):
-    return np.argmax(self.Q_network.predict(s))
+  def predict_action(self,s, player):
+    return np.argmax(self.Q_network.predict([s, player]))
 

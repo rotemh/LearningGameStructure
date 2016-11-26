@@ -98,11 +98,14 @@ class ReinforcementLearningAgent:
     else:
       self.sup_policy.load_weights(weight_fname)
 
-  def predict_action(self,s,policy='supervised'):
+  def predict_action(self,s,player=None,policy='supervised'):
     '''
     This function returns a probability distribution across columns
     when policy is set to supervised. It does nothing when policy
     is not set to supervised since there is no policy_network
+
+    Note that player is not used in this class, but is necessary to give 
+    this the same contract as SupervisedQNetwork
     '''
     s = np.asarray(s)
     s=self.datagen.standardize(s)
