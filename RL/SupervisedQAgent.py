@@ -41,9 +41,6 @@ class SupervisedQAgent:
     else:
       self.training_data_path = 'train_data/'
 
-    print("test")
-    print(self.get_random_episode() )#Test
-
   def create_model(self):
     """
     Constructs the value network, which takes an image and player id as input
@@ -118,7 +115,6 @@ class SupervisedQAgent:
     # However, WE HAVE NOT YET IMPLEMENTED SAVING AN OLD NETWORK AND COMPUTING Q_OLD
     # Not sure this is necessary for supervised learning only
     next_player = 1 - player
-    print K.backend()
     if K.backend() == 'tensorflow':
       next_state_value = stop_gradient(self.Q_network([next_state, next_player]))
     elif K.backend() == 'theano':
@@ -181,7 +177,6 @@ class SupervisedQAgent:
       episode = self.get_random_episode()
       episodes.append(episode)
 
-    print len(episodes)
     # Now retrieve random samples from the different episodes
     for i in xrange(minibatch_size):
       episode = random.choice(episodes) # pick a random episode
@@ -199,7 +194,7 @@ class SupervisedQAgent:
 
     # train on the frames we just extracted
     # NOTE: there might be a better way to train on a custom function?
-    cost_list = self.train_Q_fn(state, new_state, action, reward, terminal, player)
+    cost_list = self.train_Q_fn([state, new_state, action, reward, terminal, player])
     cost = cost_list[0] # weird quirk of keras requires us to return cost as single-element list
     return cost
 
@@ -231,7 +226,6 @@ class SupervisedQAgent:
       action = data[i][2][0][0][1][0][0] # col
       next_state = data[i][3]
       reward = data[i][4][0][player]
-      print(reward)
       terminal = 1 if reward != 0 else 0
       transition = [state, next_state, action, reward, terminal, player]
       episode.append(transition)
@@ -261,7 +255,6 @@ class SupervisedQAgent:
     action = data[i][2][0][0][1][0][0] # col
     next_state = data[i][3]
     reward = data[i][4][0][player]
-    print(reward)
     terminal = 1 if reward != 0 else 0
 
     return [state, next_state, action, reward, terminal, player]
