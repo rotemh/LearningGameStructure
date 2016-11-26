@@ -166,12 +166,12 @@ class SupervisedQAgent:
     each episode - [state, next_state, action, reward, terminal]
     """
     # Create empty containers for the tuples we'll train on
-    state = numpy.zeros((minibatch_size,) + self.state_size)
-    player = numpy.zeros((minibatch_size, 1), dtype=numpy.float32)
-    new_state = numpy.zeros((minibatch_size,) + self.state_size)
-    action = numpy.zeros((minibatch_size, 1), dtype=numpy.int32)
-    reward = numpy.zeros((minibatch_size, 1), dtype=numpy.float32)
-    terminal = numpy.zeros((minibatch_size, 1), dtype=numpy.int32)
+    state = np.zeros((minibatch_size,) + self.state_size)
+    player = np.zeros((minibatch_size, 1), dtype=np.float32)
+    new_state = np.zeros((minibatch_size,) + self.state_size)
+    action = np.zeros((minibatch_size, 1), dtype=np.int32)
+    reward = np.zeros((minibatch_size, 1), dtype=np.float32)
+    terminal = np.zeros((minibatch_size, 1), dtype=np.int32)
 
     # Retrieve a bunch of episodes to extract transitions from them
     num_episodes_to_retrieve = minibatch_size%8 # on average, 8 transitions from each episode
