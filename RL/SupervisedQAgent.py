@@ -98,7 +98,7 @@ class SupervisedQAgent:
     and can be descended on by calling self.train_Q_fn(state, next_state, action, reward, terminal)
 
     The overall cost being encoded is:
-    (Q(next_state, best action) + reward - Q(state, action))^2
+    (current_reward - Q_opponent(next_state, best action) - Q(state, action))^2
     TBC this isn't validated, but I borrowed much of this syntax from online and it should work
 
     """
