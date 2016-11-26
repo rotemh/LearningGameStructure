@@ -98,6 +98,74 @@ class ReinforcementLearningAgent:
     else:
       self.sup_policy.load_weights(weight_fname)
 
+
+  def getRandomEpisode(self):
+    """
+    gets a given episode, en entire run-though of one game.
+
+    The episode is returned as a list of transitions, where each
+    transition is of the form:
+       [state, next_state, action, reward, terminal]
+    """
+    train_files = os.listdir(self.training_data_path)
+    game = random.choice(train_files)
+    gotData = False
+
+    while not gotData:
+      game = random.choice(train_files)
+      try:
+        data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
+        gotData = True
+      except:
+        # corrupted file
+        continue
+
+    episode = []
+    for i in xrange(len(data.shape[0])):
+      player = data[i][0]
+      state = data[i][1]
+      action = data[i][2][0][0][1][0][0] # col
+      next_state = data[i][3]
+      reward = data[i][4][0][player]
+      print(reward)
+      terminal = 1 if reward != 0 else 0
+      transition = [state, next_state, action, reward, terminal]
+      episode.append(transition)
+
+    return episode
+
+  def getRandomTransition(self):
+    """
+    gets a given random transition
+    """
+    train_files = os.listdir(self.training_data_path)
+    game = random.choice(train_files)
+    gotData = False
+
+    while not gotData:
+      game = random.choice(train_files)
+      try:
+        data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
+        gotData = True
+      except:
+        # corrupted file
+        continue
+
+    i = random.randint(0, data.shape[0]-1)
+    player = data[i][0]
+    state = data[i][1]
+    action = data[i][2][0][0][1][0][0] # col
+    next_state = data[i][3]
+    reward = data[i][4][0][player]
+    print(reward)
+    terminal = 1 if reward != 0 else 0
+
+    return [state, next_state, action, reward, terminal]
+
+
+  def getRandomGame(self):
+
+
   def predict_action(self,s,policy='supervised'):
     '''
     This function returns a probability distribution across columns
