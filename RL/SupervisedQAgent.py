@@ -134,9 +134,10 @@ class SupervisedQAgent:
     params = self.Q_network.trainable_weights
     updates = opt.get_updates(params, [], cost) # instantiates optimizer
     # the last line creates a callable function to run the optimizer for a given batch specified by those 5 arguments
+    self.cost_fn = K.function([state, next_state, action, reward, terminal, player], [cost])
     self.train_fn = K.function([state, next_state, action, reward, terminal, player], [cost], updates=updates)
 
-  def train(self, num_batches=1000, minibatch_size=32):
+  def train(self, num_batches=1000, minibatch_size=128):
     """
     Trains the SupervisedQAgent using episodes retrieved from its encoded directory
     Currently contains a bunch of hyperparameters, we can make them tweakable if we like
@@ -144,13 +145,42 @@ class SupervisedQAgent:
     SAVE_FREQUENCY=100 # how often to save the weights
     current_cost = np.inf
     for i in xrange(num_batches):
-      print("Updating batch %d, current error: %f")%(i,current_cost)
-      current_cost = self.update_batch() # repeatedly update the network in batches
+      current_cost = self.update_batch(minibatch_size) # repeatedly update the network in batches
       if i%SAVE_FREQUENCY == 0:
+        print("Updating batch %d, current error: %f")%(i,self.compute_error()[0])
         self.Q_network.save_weights('./qWeights/sup/supweights.h5')
     self.Q_network.save_weights('./qWeights/sup/supweights.h5')
 
-  def update_batch(self, minibatch_size=32):
+
+  def compute_error(self, num_validation_episodes=32):
+    """
+    Computes the error associated with a random subset
+    of num_validation_episodes episodes.
+    """
+    episodes = []
+    n = 0
+    for i in xrange(num_validation_episodes):
+      episodes.append(self.get_random_episode())
+      n += len(episodes[-1])
+
+    state = np.zeros((n,) + self.img_shape)
+    next_state = np.zeros((n,) + self.img_shape)
+    action = np.zeros((n, 1), dtype=np.int32)
+    reward = np.zeros((n, 1), dtype=np.float32)
+    terminal = np.zeros((n, 1), dtype=np.int32)
+    player = np.zeros((n, 1), dtype=np.float32)
+
+    i = 0
+    for episode in episodes:
+      for frame in episode:
+        state[i], next_state[i],action[i],reward[i],terminal[i],player[i] = frame
+        i+=1
+
+    total_cost = self.cost_fn([state,next_state,action,reward,terminal,player])
+    return total_cost
+
+
+  def update_batch(self, minibatch_size=128):
     """
     Updates the self.Q_network with a single minibatch of frames
     Each frame goes from state to new_state, using action "action", with reward "reward"
@@ -163,11 +193,11 @@ class SupervisedQAgent:
     """
     # Create empty containers for the tuples we'll train on
     state = np.zeros((minibatch_size,) + self.img_shape)
-    player = np.zeros((minibatch_size, 1), dtype=np.float32)
     new_state = np.zeros((minibatch_size,) + self.img_shape)
     action = np.zeros((minibatch_size, 1), dtype=np.int32)
     reward = np.zeros((minibatch_size, 1), dtype=np.float32)
     terminal = np.zeros((minibatch_size, 1), dtype=np.int32)
+    player = np.zeros((minibatch_size, 1), dtype=np.float32)
 
     # Retrieve a bunch of episodes to extract transitions from them
     num_episodes_to_retrieve = (np.floor(minibatch_size/8.)).astype(int) # on average, 8 transitions from each episode
@@ -186,11 +216,11 @@ class SupervisedQAgent:
       s, ns, a, r, t, p = frame
       # add the frame to the tuples to be trained on
       state[i] = s
-      player[i] = p
       new_state[i] = ns
       action[i] = a
       reward[i] = r
       terminal[i] = t
+      player[i] = p
 
     # train on the frames we just extracted
     # NOTE: there might be a better way to train on a custom function?
