@@ -225,7 +225,7 @@ class SupervisedQAgent:
         continue
 
     episode = []
-    for i in xrange(len(data.shape[0])):
+    for i in xrange(data.shape[0]):
       player = data[i][0]
       state = data[i][1]
       action = data[i][2][0][0][1][0][0] # col
