@@ -174,7 +174,8 @@ class SupervisedQAgent:
     terminal = np.zeros((minibatch_size, 1), dtype=np.int32)
 
     # Retrieve a bunch of episodes to extract transitions from them
-    num_episodes_to_retrieve = minibatch_size%8 # on average, 8 transitions from each episode
+    print minibatch_size
+    num_episodes_to_retrieve = np.mod(minibatch_size,8) # on average, 8 transitions from each episode
 
     print num_episodes_to_retrieve
     episodes = []
