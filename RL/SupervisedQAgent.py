@@ -174,10 +174,8 @@ class SupervisedQAgent:
     terminal = np.zeros((minibatch_size, 1), dtype=np.int32)
 
     # Retrieve a bunch of episodes to extract transitions from them
-    print minibatch_size
     num_episodes_to_retrieve = (np.floor(minibatch_size/8.)).astype(int) # on average, 8 transitions from each episode
 
-    print num_episodes_to_retrieve
     episodes = []
     for i in xrange(num_episodes_to_retrieve):
       episode = self.get_random_episode()
@@ -186,18 +184,18 @@ class SupervisedQAgent:
     print len(episodes)
     # Now retrieve random samples from the different episodes
     for i in xrange(minibatch_size):
-      episode = random.randint(0,len(episodes)-1) # pick a random episode
-      #note that we pick our frames from the same random subset of episodes
+      episode = random.choice(episodes) # pick a random episode
+      #note that we pick our frames from the same random subset of pre-cached episodes
       #because uploading a new episode for every frame would take a long long time
-      s, ns, a, r, t, p = episodes[episode]
-      frame = random.randint(0,len(s)-1) # pick a random moment in the episode
+      frame = random.choice(episode) # pick a random moment in the episode
+      s, ns, a, r, t, p = frame
       # add the frame to the tuples to be trained on
-      state[i] = s[frame]
-      player[i] = p[frame]
-      new_state[i] = ns[frame]
-      action[i] = a[frame]
-      reward[i] = r[frame]
-      terminal[i] = t[frame]
+      state[i] = s
+      player[i] = p
+      new_state[i] = ns
+      action[i] = a
+      reward[i] = r
+      terminal[i] = t
 
     # train on the frames we just extracted
     # NOTE: there might be a better way to train on a custom function?
@@ -207,7 +205,42 @@ class SupervisedQAgent:
 
   def get_random_episode(self):
     """
-    gets a random episode from the existing set of training games
+    gets a given episode, en entire run-though of one game.
+
+    The episode is returned as a list of transitions, where each
+    transition is of the form:
+       [state, next_state, action, reward, terminal]
+    """
+    train_files = os.listdir(self.training_data_path)
+    game = random.choice(train_files)
+    gotData = False
+
+    while not gotData:
+      game = random.choice(train_files)
+      try:
+        data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
+        gotData = True
+      except:
+        # corrupted file
+        continue
+
+    episode = []
+    for i in xrange(len(data.shape[0])):
+      player = data[i][0]
+      state = data[i][1]
+      action = data[i][2][0][0][1][0][0] # col
+      next_state = data[i][3]
+      reward = data[i][4][0][player]
+      print(reward)
+      terminal = 1 if reward != 0 else 0
+      transition = [state, next_state, action, reward, terminal, player]
+      episode.append(transition)
+
+    return episode
+
+  def get_random_transition(self):
+    """
+    gets a given random transition
     """
     train_files = os.listdir(self.training_data_path)
     game = random.choice(train_files)
@@ -230,9 +263,9 @@ class SupervisedQAgent:
     reward = data[i][4][0][player]
     print(reward)
     terminal = 1 if reward != 0 else 0
-    gotData = True
 
     return [state, next_state, action, reward, terminal, player]
+
 
   def predict_Q_value(self,s):
     return self.Q_network.predict(s)
