@@ -291,8 +291,8 @@ class SupervisedQAgent:
 
 
   def predict_Q_value(self,s, player):
-    return self.Q_network.predict([s, player])
+    return self.Q_network.predict([s, np.asarray(player)])
 
   def predict_action(self,s, player):
-    return np.argmax(self.Q_network.predict([s, player]))
+    return np.argmax(self.Q_network.predict([s, np.asarray(player)]))
 
