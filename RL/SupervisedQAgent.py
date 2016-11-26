@@ -104,15 +104,12 @@ class SupervisedQAgent:
     TBC this isn't validated, but I borrowed much of this syntax from online and it should work
 
     """
-    # We have to pre-specify the batch size because of some hacky code later on
-    minibatch_size = 32
-    imgs_shape = [minibatch_size].extend(list(self.img_shape))
-    state = Input(batch_input_shape=imgs_shape, dtype='float32')
-    player = Input(batch_input_shape=(minibatch_size,1),dtype='float32')
-    next_state = Input(batch_input_shape=imgs_shape, dtype='float32')
-    action = Input(batch_input_shape=(minibatch_size,1), dtype='int32')
-    reward = Input(batch_input_shape=(minibatch_size,1), dtype='float32')
-    terminal = Input(batch_input_shape=(minibatch_size,1), dtype='int32') # 0 if not terminal, 1 if yes
+    state = Input(shape=self.img_shape, dtype='float32')
+    player = Input(shape=(1,),dtype='float32')
+    next_state = Input(shape=self.img_shape, dtype='float32')
+    action = Input(shape=(1,), dtype='int32')
+    reward = Input(shape=(1,), dtype='float32')
+    terminal = Input(shape=(1,), dtype='int32') # 0 if not terminal, 1 if yes
 
     self.create_model() # constructs the value network
     state_value = self.Q_network([state, player]) # Q(s,*)
@@ -134,22 +131,20 @@ class SupervisedQAgent:
     future_value = (1-tf.to_float(terminal)) * (-1)*K.max(next_state_value,axis=1, keepdims=True) # 0 if terminal, otherwise best next move
     discounted_future_value = self.future_discount*future_value # we aren't actually doing discounting, but this would discount future reward
     target = reward + discounted_future_value # this is what we want our Q value to add up to
-    # in order to use our actions to index into state_value, need to do some hacky shit
-    action_flattened = tf.range(0,state_value.get_shape()[0])*state_value.get_shape()[1] + action
-    indexed_state_value = tf.gather(tf.reshape(state_value,[-1]), action_flattened)
-    cost = K.mean(((indexed_state_value - target)**2)) # take the MSE of our current value w.r.t. it
+    action_mask = K.equal(tf.reshape(tf.constant(np.arange(self.num_actions),dtype='int32'),[1, -1]), tf.reshape(action,[-1, 1]))
+    action_indexed_state_value = tf.reshape(K.sum(state_value * tf.to_float(action_mask), axis=1),[-1,1])
+    cost = K.mean(((action_indexed_state_value - target)**2)) # take the MSE of our current value w.r.t. it
     opt = RMSprop(.0001)
     params = self.Q_network.trainable_weights
     updates = opt.get_updates(params, [], cost) # instantiates optimizer
     # the last line creates a callable function to run the optimizer for a given batch specified by those 5 arguments
-    self.train_Q_fn = K.function([state, next_state, action, reward, terminal, player], cost, updates=updates)
+    self.train_Q_fn = K.function([state, next_state, action, reward, terminal, player], [cost], updates=updates)
 
-  def train(self, num_batches=1000):
+  def train(self, num_batches=1000, minibatch_size=32):
     """
     Trains the SupervisedQAgent using episodes retrieved from its encoded directory
     Currently contains a bunch of hyperparameters, we can make them tweakable if we like
     """
-    minibatch_size = 32 # MUST BE 32, SEE "create_cost_function"
     SAVE_FREQUENCY=100 # how often to save the weights
     current_cost = np.inf
     for i in xrange(num_batches):
@@ -159,7 +154,7 @@ class SupervisedQAgent:
         self.Q_network.save_weights('./qWeights/sup/supweights.h5')
     self.Q_network.save_weights('./qWeights/sup/supweights.h5')
 
-  def update_batch(self):
+  def update_batch(self, minibatch_size=32):
     """
     Updates the self.Q_network with a single minibatch of frames
     Each frame goes from state to new_state, using action "action", with reward "reward"
@@ -170,7 +165,6 @@ class SupervisedQAgent:
 
     each episode - [state, next_state, action, reward, terminal]
     """
-    minibatch_size = 32 # MUST BE 32, SEE create_cost_function
     # Create empty containers for the tuples we'll train on
     state = numpy.zeros((minibatch_size,) + self.state_size)
     player = numpy.zeros((minibatch_size, 1), dtype=numpy.float32)
@@ -205,7 +199,8 @@ class SupervisedQAgent:
 
     # train on the frames we just extracted
     # NOTE: there might be a better way to train on a custom function?
-    cost = self.train_Q_fn(state, new_state, action, reward, terminal, player)
+    cost_list = self.train_Q_fn(state, new_state, action, reward, terminal, player)
+    cost = cost_list[0] # weird quirk of keras requires us to return cost as single-element list
     return cost
 
   def get_random_episode(self):
