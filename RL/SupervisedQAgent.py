@@ -166,9 +166,9 @@ class SupervisedQAgent:
     each episode - [state, next_state, action, reward, terminal]
     """
     # Create empty containers for the tuples we'll train on
-    state = np.zeros((minibatch_size,) + self.state_size)
+    state = np.zeros((minibatch_size,) + self.img_shape)
     player = np.zeros((minibatch_size, 1), dtype=np.float32)
-    new_state = np.zeros((minibatch_size,) + self.state_size)
+    new_state = np.zeros((minibatch_size,) + self.img_shape)
     action = np.zeros((minibatch_size, 1), dtype=np.int32)
     reward = np.zeros((minibatch_size, 1), dtype=np.float32)
     terminal = np.zeros((minibatch_size, 1), dtype=np.int32)
