@@ -27,10 +27,10 @@ def generate_supervised_training_data(episode_num, time_limit=0.5, file_path='da
 	train_data= []
 	episode = generate_uct_game(time_limit)
 	win_player_id = np.argmax(episode[-1][-1])
-	winner_train_data = [e for e in episode if e[0] == win_player_id]
-	loser_train_data = [e for e in episode if e[0] != win_player_id]
-	sio.savemat(file_path + str(episode_num)+'.mat',{'winner_train_data':winner_train_data,'loser_train_data':loser_train_data,\
-								'uct_time_limit':time_limit})
+	#winner_train_data = [e for e in episode if e[0] == win_player_id]
+	#loser_train_data = [e for e in episode if e[0] != win_player_id]
+	sio.savemat(file_path + str(episode_num)+'.mat',{'train_data':episode,'uct_time_limit':time_limit})
+	#sio.savemat(file_path + str(episode_num)+'.mat',{'winner_train_data':winner_train_data,'loser_train_data':loser_train_data,'uct_time_limit':time_limit})
 	return
 	
 def main():
