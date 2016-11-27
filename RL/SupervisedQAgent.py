@@ -147,7 +147,7 @@ class SupervisedQAgent:
     for i in xrange(num_batches):
       current_cost = self.update_batch(minibatch_size) # repeatedly update the network in batches
       if i%SAVE_FREQUENCY == 0:
-        print("Updating batch %d, current error: %f")%(i,self.compute_error()[0])
+        print("Updating batch %d, current error: %f")%(i,self.compute_error())
         self.Q_network.save_weights('./qWeights/sup/supweights.h5')
     self.Q_network.save_weights('./qWeights/sup/supweights.h5')
 
@@ -170,7 +170,7 @@ class SupervisedQAgent:
       player = np.zeros((n, 1), dtype=np.float32)
       for i in xrange(len(episode)):
         state[i], next_state[i],action[i],reward[i],terminal[i],player[i] = episode[i]
-      total_cost += self.cost_fn([state,next_state,action,reward,terminal,player])
+      total_cost += self.cost_fn([state,next_state,action,reward,terminal,player])[0]
 
     return total_cost
 
