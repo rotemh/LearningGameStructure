@@ -55,19 +55,19 @@ class SupervisedQAgent:
     kernel_size = 2
 
     # Convnet moves from image to low-dimensional rep
-    sup_network_h0 = Convolution2D(nb_filter = 16,
+    sup_network_h0 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
                                    border_mode='same', init=conv_init)(s_img)
-    sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
+    sup_network_h0 = MaxPooling2D(pool_size=(8,8))(sup_network_h0)
 
-    sup_network_h1 = Convolution2D(nb_filter = 16,
+    sup_network_h1 = Convolution2D(nb_filter = 64,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h0)
-    sup_network_h1 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
+    sup_network_h1 = MaxPooling2D(pool_size=(4,4))(sup_network_h1)
 
-    sup_network_h2 = Convolution2D(nb_filter = 16,
+    sup_network_h2 = Convolution2D(nb_filter = 64,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h1)
