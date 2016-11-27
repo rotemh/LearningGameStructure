@@ -137,7 +137,7 @@ class SupervisedQAgent:
     self.cost_fn = K.function([state, next_state, action, reward, terminal, player], [cost])
     self.train_fn = K.function([state, next_state, action, reward, terminal, player], [cost], updates=updates)
 
-  def train(self, num_batches=1000, minibatch_size=128):
+  def train(self, num_batches=5000, minibatch_size=128):
     """
     Trains the SupervisedQAgent using episodes retrieved from its encoded directory
     Currently contains a bunch of hyperparameters, we can make them tweakable if we like
@@ -152,7 +152,7 @@ class SupervisedQAgent:
     self.Q_network.save_weights('./qWeights/sup/supweights.h5')
 
 
-  def compute_error(self, num_validation_episodes=32):
+  def compute_error(self, num_validation_episodes=256):
     """
     Computes the error associated with a random subset
     of num_validation_episodes episodes.
