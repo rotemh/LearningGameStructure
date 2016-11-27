@@ -27,12 +27,13 @@ class SupervisedQAgent:
   """
 
 
-  def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=1, simple_model=False):
+  def __init__(self,img_shape,num_actions, training_data_path=None, future_discount=1, simple_model=False,preload_data=False):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
     self.num_actions = num_actions # overall number of actions one could apply
     self.future_discount = future_discount # amount by which to discount each future action, often written as gamma
     self.simple_model = simple_model
+    self.preload_data = preload_data
 
     self.create_cost_function() # constructs DQN value network and cost function which will then be minimized
     
@@ -41,6 +42,10 @@ class SupervisedQAgent:
       self.training_data_path = training_data_path
     else:
       self.training_data_path = 'train_data/'
+
+    if self.preload_data:
+      self.load_all_data()
+
 
   def create_simple_model(self):
     """
@@ -184,15 +189,7 @@ class SupervisedQAgent:
 
     for j in xrange(num_validation_episodes):
       episode = self.get_random_episode()
-      n = len(episode)
-      state = np.zeros((n,) + self.img_shape)
-      next_state = np.zeros((n,) + self.img_shape)
-      action = np.zeros((n, 1), dtype=np.int32)
-      reward = np.zeros((n, 1), dtype=np.float32)
-      terminal = np.zeros((n, 1), dtype=np.int32)
-      player = np.zeros((n, 1), dtype=np.float32)
-      for i in xrange(len(episode)):
-        state[i], next_state[i],action[i],reward[i],terminal[i],player[i] = episode[i]
+      state, next_state, action, reward, terminal, player = episode
       total_cost += self.cost_fn([state,next_state,action,reward,terminal,player])[0]
 
     return total_cost
@@ -254,6 +251,9 @@ class SupervisedQAgent:
     transition is of the form:
        [state, next_state, action, reward, terminal]
     """
+    if self.preload_data:
+      return random.choice(self.all_episodes)
+
     train_files = os.listdir(self.training_data_path)
     game = random.choice(train_files)
     gotData = False
@@ -267,46 +267,51 @@ class SupervisedQAgent:
         # corrupted file
         continue
 
-    episode = []
-    for i in xrange(data.shape[0]):
-      player = data[i][0]
-      state = data[i][1]
-      action = data[i][2][0][0][1][0][0] # col
-      next_state = data[i][3]
-      reward = data[i][4][0][player]
-      terminal = 1 if reward != 0 else 0
-      transition = [state, next_state, action, reward, terminal, player]
-      episode.append(transition)
+    episode = matdata_to_npdata(data)
 
     return episode
 
-  def get_random_transition(self):
+  def load_all_data(self):
     """
-    gets a given random transition
+    Loads all episodes in the training directory into self.all_episodes
+    For each episode, stores its relevant variables as described in "matdata_to_npdata"
     """
+    self.all_episodes = []
     train_files = os.listdir(self.training_data_path)
-    game = random.choice(train_files)
-    gotData = False
-
-    while not gotData:
-      game = random.choice(train_files)
+    
+    for game in train_files:
       try:
         data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
-        gotData = True
+        episode = matdata_to_npdata(data)
+        self.all_episodes.append(episode)
       except:
         # corrupted file
         continue
+    print len(self.all_episodes)
 
-    i = random.randint(0, data.shape[0]-1)
-    player = data[i][0]
-    state = data[i][1]
-    action = data[i][2][0][0][1][0][0] # col
-    next_state = data[i][3]
-    reward = data[i][4][0][player]
-    terminal = 1 if reward != 0 else 0
+  def matdata_to_npdata(data):
+    """
+    Converts mat representation of data to a tuple numpy arrays
+    of the following data:
+    [state, next_state, action, reward, terminal, player]
+    """
+    n = data.shape[0]
+    state = np.zeros((n,) + self.img_shape)
+    next_state = np.zeros((n,) + self.img_shape)
+    action = np.zeros((n, 1), dtype=np.int32)
+    reward = np.zeros((n, 1), dtype=np.float32)
+    terminal = np.zeros((n, 1), dtype=np.int32)
+    player = np.zeros((n, 1), dtype=np.float32)
 
-    return [state, next_state, action, reward, terminal, player]
-
+    for i in xrange(data.shape[0]):
+      state[i] = data[i][1]
+      action[i] = data[i][2][0][0][1][0][0] # col
+      next_state[i] = data[i][3]
+      player[i] = data[i][0]
+      reward[i] = data[i][4][0][player]
+      terminal[i] = 1 if reward != 0 else 0
+    episode = [state,next_state,action,reward,terminal,player]
+    return episode
 
   def predict_Q_value(self,s, player):
     return self.Q_network.predict([s, np.asarray(player)])
