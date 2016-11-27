@@ -8,7 +8,7 @@ import os
 
 
 def main():
-	agent = SupervisedQAgent((144,144,3),7, preload_data=True)
+	agent = SupervisedQAgent((144,144,3),7, preload_data=False)
 	agent.train()
 	player = RLPlayer("supervisedq",agent)
 	tester.test_policy_vs_MCTS(player,verbose=True)

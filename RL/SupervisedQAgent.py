@@ -227,15 +227,15 @@ class SupervisedQAgent:
       episode = random.choice(episodes) # pick a random episode
       #note that we pick our frames from the same random subset of pre-cached episodes
       #because uploading a new episode for every frame would take a long long time
-      frame = random.choice(episode) # pick a random moment in the episode
-      s, ns, a, r, t, p = frame
+      s, ns, a, r, t, p = episode
+      j = random.randint(0,len(p)-1) # pick a random moment in the episode
       # add the frame to the tuples to be trained on
-      state[i] = s
-      new_state[i] = ns
-      action[i] = a
-      reward[i] = r
-      terminal[i] = t
-      player[i] = p
+      state[i] = s[j]
+      new_state[i] = ns[j]
+      action[i] = a[j]
+      reward[i] = r[j]
+      terminal[i] = t[j]
+      player[i] = p[j]
 
     # train on the frames we just extracted
     # NOTE: there might be a better way to train on a custom function?
@@ -267,7 +267,7 @@ class SupervisedQAgent:
         # corrupted file
         continue
 
-    episode = matdata_to_npdata(data)
+    episode = self.matdata_to_npdata(data)
 
     return episode
 
@@ -282,14 +282,14 @@ class SupervisedQAgent:
     for game in train_files:
       try:
         data = sio.loadmat( self.training_data_path +'/'+game )['train_data']
-        episode = matdata_to_npdata(data)
+        episode = self.matdata_to_npdata(data)
         self.all_episodes.append(episode)
       except:
         # corrupted file
         continue
     print len(self.all_episodes)
 
-  def matdata_to_npdata(data):
+  def matdata_to_npdata(self, data):
     """
     Converts mat representation of data to a tuple numpy arrays
     of the following data:
@@ -307,9 +307,10 @@ class SupervisedQAgent:
       state[i] = data[i][1]
       action[i] = data[i][2][0][0][1][0][0] # col
       next_state[i] = data[i][3]
-      player[i] = data[i][0]
-      reward[i] = data[i][4][0][player]
-      terminal[i] = 1 if reward != 0 else 0
+      p = data[i][0]
+      player[i] = p
+      reward[i] = data[i][4][0][p]
+      terminal[i] = 1 if reward[i] != 0 else 0
     episode = [state,next_state,action,reward,terminal,player]
     return episode
 
