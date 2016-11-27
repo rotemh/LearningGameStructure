@@ -1,6 +1,6 @@
+from MCTS.game import *
 from MCTS.sim import *
 from RL.SupervisedQAgent import *
-from MCTS.game import *
 import tester 
 import numpy as np
 import scipy.io as sio
