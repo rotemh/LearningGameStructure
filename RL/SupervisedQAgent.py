@@ -157,26 +157,21 @@ class SupervisedQAgent:
     Computes the error associated with a random subset
     of num_validation_episodes episodes.
     """
-    episodes = []
-    n = 0
-    for i in xrange(num_validation_episodes):
-      episodes.append(self.get_random_episode())
-      n += len(episodes[-1])
+    total_cost = 0
 
-    state = np.zeros((n,) + self.img_shape)
-    next_state = np.zeros((n,) + self.img_shape)
-    action = np.zeros((n, 1), dtype=np.int32)
-    reward = np.zeros((n, 1), dtype=np.float32)
-    terminal = np.zeros((n, 1), dtype=np.int32)
-    player = np.zeros((n, 1), dtype=np.float32)
+    for j in xrange(num_validation_episodes):
+      episode = self.get_random_episode()
+      n = len(episode)
+      state = np.zeros((n,) + self.img_shape)
+      next_state = np.zeros((n,) + self.img_shape)
+      action = np.zeros((n, 1), dtype=np.int32)
+      reward = np.zeros((n, 1), dtype=np.float32)
+      terminal = np.zeros((n, 1), dtype=np.int32)
+      player = np.zeros((n, 1), dtype=np.float32)
+      for i in xrange(len(episode)):
+        state[i], next_state[i],action[i],reward[i],terminal[i],player[i] = episode[i]
+      total_cost += self.cost_fn([state,next_state,action,reward,terminal,player])
 
-    i = 0
-    for episode in episodes:
-      for frame in episode:
-        state[i], next_state[i],action[i],reward[i],terminal[i],player[i] = frame
-        i+=1
-
-    total_cost = self.cost_fn([state,next_state,action,reward,terminal,player])
     return total_cost
 
 
