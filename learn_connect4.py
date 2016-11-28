@@ -19,28 +19,35 @@ def generate_supervised_training_data(episode_num, time_limit=0.5, file_path='')
   return
 
 def load_supervised_training_data( train_dir ):
+  '''
+  loading double action moves from single action move
+  set. 
+  '''
   train_files = os.listdir(train_dir)
   
   s_data = []
   a = []
   sprime_data = []
-  reward = []
-  player_id = []
   for f in train_files:
     try:
       data = sio.loadmat( train_dir+'/'+f )['train_data']
-      for i in range(data.shape[0]):
+      num_of_moves = data.shape[0]
+      winning_player = data[num_of_moves -1][0]
+      reward = [0 for i in range(winning_player, num_of_moves, 2)]
+      reward[-1] = 1
+      
+      for i in range(winning_player, num_of_moves, 2):
         s_data += [data[i][1]]
         a += [data[i][2][0][0][1][0][0]] # col
-        sprime_data += [data[i][3]]
-        reward += [data[i][4]]
-        player_id += [data[i][0]]
+        sprime_data += [data[i+1][3]]
+        #reward += [data[i][4][0][winning_player][0][0]]
+        #player_id += [data[i][0][0][0]]
     except:
       # some files corrupted
       continue
-  return np.asarray(s_data),np.asarray(a),np.asarray(player_id)
+  return np.asarray(s_data),np.asarray(a),np.asarray(sprime_data),np.asarray(reward)
 
-def main():
+def parse_arg_to_generate_data():
   if len(sys.argv) < 2:
     raise Exception("Syntax: python %s episode_numbers" % (sys.argv[0]))
   else:
@@ -48,6 +55,8 @@ def main():
 
   generate_supervised_training_data(num_of_episodes)
 
+def main():
+  pass
 
 if __name__ == '__main__':
-    main()
+    s,a,sp,r = load_supervised_training_data('./dataset')
