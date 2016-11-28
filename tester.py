@@ -8,7 +8,6 @@ MAX_GAME_MOVES = 42
 def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
     """
     Takes in a MCTS/game.py Player instance, and compares it with MCTS players of varying quality.
-
     Returns a score vector of length len(mcts_times) with win percentages from 0 to 1 for each difficulty
     """
     if mcts_times == None:

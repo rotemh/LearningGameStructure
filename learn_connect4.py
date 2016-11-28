@@ -1,27 +1,15 @@
 from MCTS.sim import *
-#from RL.RLAgent import *
+from RL.SupervisedPolicy import *
 from MCTS.game import * 
 import numpy as np
 import scipy.io as sio
 import os
-import sys
-import threading
 from tester import test_policy_vs_MCTS
 
-def generate_supervised_training_data(episode_num, time_limit=0.5, file_path=''):
-  train_data= []
-  episode = generate_uct_game(time_limit)
-  win_player_id = np.argmax(episode[-1][-1])
-  winner_train_data = [e for e in episode if e[0] == win_player_id]
-  loser_train_data = [e for e in episode if e[0] != win_player_id]
-  sio.savemat(file_path + str(episode_num)+'.mat',{'winner_train_data':winner_train_data,'loser_train_data':loser_train_data,\
-                'uct_time_limit':time_limit})
-  return
-
-def load_supervised_training_data( train_dir ):
+def load_supervised_training_data( train_dir, singleActionToDoubleAction = True ):
   '''
-  loading double action moves from single action move
-  set. 
+  loading double action moves. If you want to load from the single move dataset, set the 
+  indicator boolean to true. 
   '''
   train_files = os.listdir(train_dir)
   
@@ -30,18 +18,27 @@ def load_supervised_training_data( train_dir ):
   sprime_data = []
   for f in train_files:
     try:
-      data = sio.loadmat( train_dir+'/'+f )['train_data']
-      num_of_moves = data.shape[0]
-      winning_player = data[num_of_moves -1][0]
-      reward = [0 for i in range(winning_player, num_of_moves, 2)]
-      reward[-1] = 1
+      if singleActionToDoubleAction:
+        data = sio.loadmat( train_dir+'/'+f )['train_data']
+        num_of_moves = data.shape[0]
+        winning_player = data[num_of_moves -1][0]
+        reward = [0 for i in range(winning_player, num_of_moves, 2)]
+        reward[-1] = 1
       
-      for i in range(winning_player, num_of_moves, 2):
-        s_data += [data[i][1]]
-        a += [data[i][2][0][0][1][0][0]] # col
-        sprime_data += [data[i+1][3]]
-        #reward += [data[i][4][0][winning_player][0][0]]
-        #player_id += [data[i][0][0][0]]
+        for i in range(winning_player, num_of_moves, 2):
+          s_data += [data[i][1]]
+          a += [data[i][2][0][0][1][0][0]] # col
+          sprime_data += [data[i+1][3]]
+          #reward += [data[i][4][0][winning_player][0][0]]
+          #player_id += [data[i][0][0][0]]
+      else:  
+        data = sio.loadmat( train_dir+'/'+f )['winner_train_data']
+        for i in range(data.shape[0]):
+          s_data += [data[i][1]]
+          a += [data[i][2][0][0][1][0][0]] # col
+          sprime_data += [data[i][3]]
+          #reward += [data[i][4]]
+          #player_id += [data[i][0]]
     except:
       # some files corrupted
       continue
@@ -56,7 +53,12 @@ def parse_arg_to_generate_data():
   generate_supervised_training_data(num_of_episodes)
 
 def main():
-  pass
+  train_dataset_dir = './dataset/'
+  s_data,a1,a2,player_id = load_supervised_training_data(train_dataset_dir)
+  rl_agent = SupervisedPolicyAgent((144,144,3),8)
+  rl_agent.update_supervised_policy(s_data,a1,player_id)
+  rl_player = game.RLPlayer('algo_1', rl_agent)
+  test_policy_vs_MCTS(rl_player)
 
 if __name__ == '__main__':
     s,a,sp,r = load_supervised_training_data('./dataset')
