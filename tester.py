@@ -188,7 +188,7 @@ def main():
     test_player = game.ComputerPlayer('mcts',mcts.uct, .7)
     score = test_policy_vs_MCTS(test_player, verbose=True)
     print "Score vector: ", score
-    test_qValues(player, verbose=True):
+    test_qValues(player, True)
 
 
 if __name__ == "__main__":
