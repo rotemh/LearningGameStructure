@@ -642,7 +642,7 @@ class Simulation(object):
             if state_action_history:
                 self.history.append((player_id, old_board.visualize_image(), old_board.state, \
                                     action, self.board.visualize_image(),self.board.state, \
-                                    self.board.reward_vector()))
+                                    self.board.reward_vector(),old_board.state,self.board.state))
             else:
                 self.history.append((player_id, action))
        
