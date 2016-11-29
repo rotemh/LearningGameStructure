@@ -9,7 +9,7 @@ from keras.preprocessing.image import ImageDataGenerator
 import os
 import numpy as np
 
-class SupervisedPolicyAgent:
+class SupervisedQNetworkAgent:
   def __init__(self,img_shape,num_actions):
     #self.img_size = img_size # length of one of the sides of each image (which is square)
     self.img_shape = img_shape # tuple describing the length and width (in pixels), and number of channels of the image
@@ -17,7 +17,7 @@ class SupervisedPolicyAgent:
     
     self.create_supervised_policy_model()
 
-  def create_supervised_policy_model(self):
+  def create_supervised_q_network_model(self):
     conv_init = 'lecun_uniform'
     dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')

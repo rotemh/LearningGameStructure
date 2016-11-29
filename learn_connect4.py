@@ -34,7 +34,7 @@ def load_supervised_training_data( train_dir ):
   return np.asarray(s_data),np.asarray(a1),np.asarray(a2),np.asarray(player_id)
 
 def main():
-  train_dataset_dir = './dataset/'
+  train_dataset_dir = '../dataset/'
   s_data,a1,a2,player_id = load_supervised_training_data(train_dataset_dir)
   rl_agent = SupervisedPolicyAgent((144,144,3),8)
   rl_agent.update_supervised_policy(s_data,a1,player_id)
