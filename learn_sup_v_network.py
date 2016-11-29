@@ -8,7 +8,6 @@ from tester import test_policy_vs_MCTS
 
 def load_supervised_training_data( train_dir ):
   train_files = os.listdir(train_dir)
-  
   s_data = []
   a1 = []
   a2 = []
@@ -47,7 +46,6 @@ def load_supervised_training_data( train_dir ):
       continue
   return np.asarray(s_data),np.asarray(a1),np.asarray(a2),\
         np.asarray(player_id),np.asarray(reward),np.asarray(value)
-
 
 def main():
   train_dataset_dir = '../dataset/'

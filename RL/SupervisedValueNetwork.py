@@ -75,11 +75,11 @@ class SupervisedValueNetworkAgent:
     early = EarlyStopping(monitor='val_loss', patience=20000, verbose=0, mode='auto')
     state = self.datagen.standardize(state)
     checkpoint = ModelCheckpoint(filepath=\
-                          './valueNetworkWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
-                           monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
+                          './valueNetworkWeights/sup/sup_weights.{epoch:02d}-{val_loss:.5f}.hdf5',\
+                           monitor='val_loss', verbose=0, save_best_only=True, mode='auto')
     self.sup_v_network.fit([state,player_id],v,nb_epoch=10000,
                         callbacks=[early,checkpoint],
-                        batch_size = 64,
+                        batch_size = 32,
                         validation_split = 0.1
                         )
   
