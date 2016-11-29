@@ -5,6 +5,12 @@ import numpy as np
 import scipy.io as sio
 import os
 from tester import test_policy_vs_MCTS
+import tensorflow as tf
+from keras import backend as K
+
+
+#sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+#K.set_session(sess)
 
 def load_supervised_training_data( train_dir ):
   train_files = os.listdir(train_dir)
@@ -16,6 +22,7 @@ def load_supervised_training_data( train_dir ):
   reward = []
   player_id = []
   value = []
+  
   for f in train_files:
     try:
       data = sio.loadmat( train_dir+'/'+f )['winner_train_data']
@@ -29,6 +36,7 @@ def load_supervised_training_data( train_dir ):
         sprime_data += [data[i][3]]
         player_id += [data[i][0]]
         reward += [data[i][4]]
+
         if player_id[-1] == 0:
           # value = end reward
           value += [data[-1][4][0][0]]
