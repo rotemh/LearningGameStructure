@@ -131,7 +131,10 @@ class ConnectFourBoard(Board):
 
         if state is None:
             self.state = [[ConnectFourBoard.EMPTY for j in xrange(ConnectFourBoard.NUM_ROWS)] for i in xrange(ConnectFourBoard.NUM_COLS)]
-            self.turn = ConnectFourBoard.RED
+            if np.random.rand() > 0.5:
+              self.turn = ConnectFourBoard.RED
+            else:
+              self.turn = ConnectFourBoard.BLACK
         else:
             self.state = state
             self.turn = turn
@@ -642,11 +645,18 @@ class Simulation(object):
             player = self.players[player_id]
             action = player.choose_action(self.board)
             self.board = player.play_action(action, self.board)
-              
             if state_action_history:
-                self.history.append((player_id, old_board.visualize_image(), \
-                                    action, self.board.visualize_image(), \
-                                    self.board.reward_vector(),old_board.state,self.board.state))
+                self.history.append({'player_id':player_id,
+                                     'action': action,
+                                     's_img': old_board.visualize_image(),
+                                     'sprime_img': self.board.visualize_image(),
+                                     's':old_board.state,
+                                     'sprime':self.board.state, 
+                                     'reward':self.board.reward_vector(),
+                                     'terminal_board': self.board.is_terminal()})
+                #self.history.append((player_id, old_board.visualize_image(), \
+                #                    action, self.board.visualize_image(), \
+                #                    self.board.reward_vector(),old_board.state,self.board.state))
             else:
                 self.history.append((player_id, action))
        

@@ -7,7 +7,7 @@ import os
 from tester import test_policy_vs_MCTS
 import tensorflow as tf
 from keras import backend as K
-
+import pickle
 
 #sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 #K.set_session(sess)
@@ -27,12 +27,20 @@ def load_supervised_training_data( train_dir ):
   
   for f in train_files:
     try:
-      data = sio.loadmat( train_dir+'/'+f )['winner_train_data']
+      import pdb;pdb.set_trace()
+      f='7.p'
+      #data = sio.loadmat( train_dir+'/'+f )['winner_train_data']
+      data = pickle.load(open( train_dir+'/'+f))['winner_train_data']
+      import pdb;pdb.set_trace()
       for i in range(data.shape[0]):
+        import pdb;pdb.set_trace()
         if i==0:
           # skip the very first board position; too much variations
+          img = data[i][1]
           continue 
-        player_id += [data[i][0][0][0]]
+        
+        
+        player_id += [data[i][0][0][0][0]]
         s_data += [data[i][1]]
         a1 += [data[i][2][0][0][1][0][0]] # col
         a2 += [data[i][2][0][0][2][0][0]] # row
@@ -78,8 +86,10 @@ def load_supervised_training_data( train_dir ):
         np.asarray(player_id),np.asarray(reward),np.asarray(value),s_board_data,sprime_board_data
 
 def main():
-  train_dataset_dir = '../dataset/'
+  train_dataset_dir = './dataset/'
   s_data,a1,a2,player_id,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
+  print np.shape(s_data)[0]
+  import pdb;pdb.set_trace()
   rl_agent = SupervisedPolicyAgent((144,144,3),8)
   rl_agent.update_supervised_policy(s_data,a1,player_id)
   rl_player = game.RLPlayer('algo_1', rl_agent)

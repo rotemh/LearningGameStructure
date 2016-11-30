@@ -83,10 +83,9 @@ class SupervisedPolicyAgent:
     checkpoint = ModelCheckpoint(filepath=\
                                 './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
                                   monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
-    
     self.sup_policy.fit([state,player_id],action,nb_epoch=10000,
                         callbacks=[early,checkpoint],
-                        batch_size = 64,
+                        batch_size = 32,
                         validation_split = 0.1
                         )
   def load_train_results(self):
@@ -104,11 +103,8 @@ class SupervisedPolicyAgent:
 
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
-#    player_id = np.asarray(player_id)
     action_prob = self.sup_policy.predict([s,player_id])
     if np.shape(s)[0] == 1:
       return action_prob[0]
     else:
       return action_prob
-      
-  
