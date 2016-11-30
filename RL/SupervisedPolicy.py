@@ -7,6 +7,7 @@ from keras.callbacks import *
 from keras.preprocessing.image import ImageDataGenerator
 
 import os
+import pickle
 import numpy as np
 
 class SupervisedPolicyAgent:
@@ -73,6 +74,7 @@ class SupervisedPolicyAgent:
       featurewise_center=True,
       featurewise_std_normalization=True)
     self.datagen.fit(state)
+    pickle.dump( self.datagen,open('./policyWeights/sup/datagen.p','wb'))
 
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
@@ -81,28 +83,32 @@ class SupervisedPolicyAgent:
     checkpoint = ModelCheckpoint(filepath=\
                                 './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
                                   monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
+    
     self.sup_policy.fit([state,player_id],action,nb_epoch=10000,
                         callbacks=[early,checkpoint],
                         batch_size = 64,
                         validation_split = 0.1
                         )
+  def load_train_results(self):
+    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.369-0.31940.hdf5')
+    self.datagen = pickle.load( open( "./policyWeights/sup/datagen.p", "rb" ) )
   
-  def predict_action(self,s,policy='supervised'):
+  def predict_action(self,s,player_id):
     '''
     This function returns a probability distribution across columns
     when policy is set to supervised. It does nothing when policy
     is not set to supervised since there is no policy_network
     '''
-    s = np.asarray(s)
+    s = (np.asarray(s).copy()).astype('float32')
     s = self.datagen.standardize(s)
 
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
-
-    if policy=='supervised':
-        action_prob = self.sup_policy.predict(s)
-        return action_prob
+#    player_id = np.asarray(player_id)
+    action_prob = self.sup_policy.predict([s,player_id])
+    if np.shape(s)[0] == 1:
+      return action_prob[0]
     else:
-        return self.policy_network.predict(s)
-    
+      return action_prob
+      
   

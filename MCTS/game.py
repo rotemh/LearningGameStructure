@@ -139,13 +139,13 @@ class ConnectFourBoard(Board):
         self.last_move = None
         
     def get_legal_actions(self):
-        actions = set()
+        actions = []
         
         for col in xrange(len(self.state)):
             column = self.state[col]
             for row in xrange(len(column)):
                 if column[row] == ConnectFourBoard.EMPTY:
-                    actions.add(ConnectFourAction(self.turn, col, row))
+                    actions.append(ConnectFourAction(self.turn, col, row))
                     break
 
         return actions
@@ -498,11 +498,15 @@ class RLPlayer(Player):
   def choose_action(self,board):
     board_img = board.visualize_image()
     legal_actions = board.get_legal_actions()
+    
     if len(legal_actions) > 0:
-        column_prob_dist = self.agent.predict_action(board_img)
+        if board.turn == board.RED:
+          column_prob_dist = self.agent.predict_action(board_img,np.asarray([0]))
+        else:
+          column_prob_dist = self.agent.predict_action(board_img,np.asarray([1]))
         legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
-        col_action = np.argmax(legal_column_prob_dist) 
-        return col_action
+        action_idx = np.argmax(legal_column_prob_dist) 
+        return legal_actions[action_idx]
     raise IllegalArgumentException("This should never have occurred, the game is already over")
 
 class Node(object):
@@ -640,8 +644,8 @@ class Simulation(object):
             self.board = player.play_action(action, self.board)
               
             if state_action_history:
-                self.history.append((player_id, old_board.visualize_image(), old_board.state, \
-                                    action, self.board.visualize_image(),self.board.state, \
+                self.history.append((player_id, old_board.visualize_image(), \
+                                    action, self.board.visualize_image(), \
                                     self.board.reward_vector(),old_board.state,self.board.state))
             else:
                 self.history.append((player_id, action))
