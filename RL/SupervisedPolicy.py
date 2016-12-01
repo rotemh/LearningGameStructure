@@ -1,6 +1,7 @@
 from keras.models import Sequential,Model
 from keras.layers import Dense, Dropout, Activation, Flatten, Input, merge
 from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers.normalization import BatchNormalization
 from keras.utils import np_utils
 from keras import backend as K
 from keras.callbacks import *
@@ -52,12 +53,12 @@ class SupervisedPolicyAgent:
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h3)
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
-
     sup_network_h2 = Flatten()(sup_network_h3)
 
     sup_network_merge = merge([sup_network_h2,id_input],mode='concat')
+    sup_network_batch_normed = BatchNormalization()(sup_network_merge)
     sup_network_a = Dense(self.num_actions,activation='softmax',
-                            init=dense_init)(sup_network_merge)
+                            init=dense_init)(sup_network_batch_normed)
     V = sup_network_a
     self.sup_policy = Model(input =[s_img,id_input],output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',
