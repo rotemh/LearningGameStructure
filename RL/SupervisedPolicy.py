@@ -83,11 +83,11 @@ class SupervisedPolicyAgent:
     checkpoint = ModelCheckpoint(filepath=\
                                 './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
                                   monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
-    self.sup_policy.fit([state,player_id],action,nb_epoch=10000,
-                        callbacks=[early,checkpoint],
-                        batch_size = 32,
-                        validation_split = 0.1
-                        )
+    history = self.sup_policy.fit([state,player_id],action,nb_epoch=10000,
+                          callbacks=[early,checkpoint],
+                          batch_size = 32,
+                          validation_split = 0.25)
+
   def load_train_results(self):
     self.sup_policy.load_weights('./policyWeights/sup/sup_weights.369-0.31940.hdf5')
     self.datagen = pickle.load( open( "./policyWeights/sup/datagen.p", "rb" ) )

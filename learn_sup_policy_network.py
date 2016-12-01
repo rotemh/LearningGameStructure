@@ -16,8 +16,7 @@ def load_supervised_training_data( train_dir ):
   train_files = os.listdir(train_dir)
   
   s_data = []
-  a1 = []
-  a2 = []
+  a = []
   sprime_data = []
   s_board_data = []
   sprime_board_data = []
@@ -26,72 +25,66 @@ def load_supervised_training_data( train_dir ):
   value = []
   
   for f in train_files:
+    if f[f.find('.'):] != '.p':
+      continue
+    print f
     try:
-      import pdb;pdb.set_trace()
-      f='7.p'
-      #data = sio.loadmat( train_dir+'/'+f )['winner_train_data']
       data = pickle.load(open( train_dir+'/'+f))['winner_train_data']
-      import pdb;pdb.set_trace()
-      for i in range(data.shape[0]):
-        import pdb;pdb.set_trace()
+      for i in range(len(data)):
         if i==0:
           # skip the very first board position; too much variations
-          img = data[i][1]
           continue 
-        
-        
-        player_id += [data[i][0][0][0][0]]
-        s_data += [data[i][1]]
-        a1 += [data[i][2][0][0][1][0][0]] # col
-        a2 += [data[i][2][0][0][2][0][0]] # row
-        sprime_data += [data[i][3]]
-        reward += [data[i][4]]
-        s_config = data[i][5]
-        sprime_config = data[i][6]
+        player_id += [data[i]['player_id']]
+        s_data += [data[i]['s_img']]
+        a += [data[i]['action'].col] # col
+        sprime_data += [data[i]['sprime_img']]
+        reward += [data[i]['reward']]
+        s_config = [data[i]['s']]
+        sprime_config = [data[i]['sprime']]
 
-        s_board = [[-1 for j in xrange(np.shape(s_config)[0])] for i in xrange(np.shape(s_config)[1])]
-        sprime_board = [[-1 for j in xrange(np.shape(s_config)[0])] for i in xrange(np.shape(s_config)[1])]
-        n_col = np.shape(s_config)[1]
-        n_row = np.shape(s_config)[0]
+        s_board = [ [-1 for j in xrange(np.shape(s_config[-1])[0])] for i in xrange(np.shape(s_config[-1])[1]) ]
+        sprime_board = [[-1 for j in xrange(np.shape(s_config[-1])[0])] for i in xrange(np.shape(s_config[-1])[1])]
+        n_col = np.shape(s_config[-1])[1]
+        n_row = np.shape(s_config[-1])[0]
         for i in range(n_col):
           for j in range(n_row):
-            if s_config[i,j] == 'R':
+            if s_config[-1][i][j] == 'R':
               s_board[i][j] = 0
-            elif s_config[i,j] == 'B':
+            elif s_config[-1][i][j] == 'B':
               s_board[i][j] = 1
-            elif s_config[i,j] == '-':
+            elif s_config[-1][i][j] == '-':
               s_board[i][j] = -1
 
-            if sprime_config[i,j] == 'R':
+            if sprime_config[-1][i][j] == 'R':
               sprime_board[i][j] = 0
-            elif sprime_config[i,j] == 'B':
+            elif sprime_config[-1][i][j] == 'B':
               sprime_board[i][j] = 1
-            elif sprime_config[i,j] == '-':
+            elif sprime_config[-1][i][j] == '-':
               sprime_board[i][j] = -1
         s_board_data +=[s_board]
         sprime_board_data += [sprime_board]
 
         if player_id[-1] == 0:
           # value = end reward
-          value += [data[-1][4][0][0]]
+          value += [data[-1]['reward'][0]]
         else:
-          value += [data[-1][4][0][1]]
-      if len(a1) > 22000:
-        return np.asarray(s_data),np.asarray(a1),np.asarray(a2),\
-        np.asarray(player_id),np.asarray(reward),np.asarray(value),s_board_data,sprime_board_data
-    except:
-      # some files corrupted
-      continue
-  return np.asarray(s_data),np.asarray(a1),np.asarray(a2),\
-        np.asarray(player_id),np.asarray(reward),np.asarray(value),s_board_data,sprime_board_data
+          value += [data[-1]['reward'][1]]
+      if len(a) > 22000:
+        return np.asarray(s_data),np.asarray(a),\
+          np.asarray(player_id),np.asarray(reward),np.asarray(value),\
+          np.asarray(s_board_data),np.asarray(sprime_board_data)
+    except ValueError:
+      print f + ' is corrupted'
+ 
+  return np.asarray(s_data),np.asarray(a),\
+    np.asarray(player_id),np.asarray(reward),np.asarray(value),\
+    np.asarray(s_board_data),np.asarray(sprime_board_data)
 
 def main():
   train_dataset_dir = './dataset/'
-  s_data,a1,a2,player_id,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
-  print np.shape(s_data)[0]
-  import pdb;pdb.set_trace()
+  s_data,a,player_id,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
   rl_agent = SupervisedPolicyAgent((144,144,3),8)
-  rl_agent.update_supervised_policy(s_data,a1,player_id)
+  rl_agent.update_supervised_policy(s_data,a,player_id)
   rl_player = game.RLPlayer('algo_1', rl_agent)
   test_policy_vs_MCTS(rl_player)
 
