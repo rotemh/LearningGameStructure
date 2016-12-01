@@ -27,7 +27,6 @@ def load_supervised_training_data( train_dir ):
   for f in train_files:
     if f[f.find('.'):] != '.p':
       continue
-    print f
     try:
       data = pickle.load(open( train_dir+'/'+f))['winner_train_data']
       for i in range(len(data)):

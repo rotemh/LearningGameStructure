@@ -5,6 +5,7 @@ from keras.utils import np_utils
 from keras import backend as K
 from keras.callbacks import *
 from keras.preprocessing.image import ImageDataGenerator
+from RL.LossGrapher import LossGrapher
 
 import os
 import pickle
@@ -83,8 +84,9 @@ class SupervisedPolicyAgent:
     checkpoint = ModelCheckpoint(filepath=\
                                 './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
                                   monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
+    loss_graph = LossGrapher()
     history = self.sup_policy.fit([state,player_id],action,nb_epoch=10000,
-                          callbacks=[early,checkpoint],
+                          callbacks=[early,checkpoint,loss_graph],
                           batch_size = 32,
                           validation_split = 0.25)
 
