@@ -17,7 +17,6 @@ def worker(q, rq):
         player, time_limit = q.get()
         print "Running game - %s %s " % (str(player), str(time_limit))
         game_result = custom_vs_uct_game(player,time_limit)
-        print "The game result - ", game_result
         rq.put(game_result)
         q.task_done()
 
@@ -32,7 +31,7 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
         total_time = np.sum(mcts_times)*MAX_GAME_MOVES*GAMES_PER_DIFFICULTY
         print "Estimated testing time: %d seconds" % total_time
 
-    for t in xrange(1):
+    for t in xrange(8):
         t = Thread(target=worker, args=(global_queue,results_q))
         t.setDaemon(True)
         t.start()
@@ -44,7 +43,7 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
             global_queue.put((player,time_limit))
         global_queue.join()
 
-        # Drain results
+        # Drain results' queue
         while not results_q.empty():
             game_result = results_q.get()
             if verbose:
