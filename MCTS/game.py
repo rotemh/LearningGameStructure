@@ -493,7 +493,7 @@ class Node(object):
     A class that represents nodes in the MCTS tree.
     """
 
-    def __init__(self, board, action=None, parent=None):
+    def __init__(self, board, action=None, parent=None, heuristic=None):
         """
         Create new node.
 
@@ -508,7 +508,11 @@ class Node(object):
         self.parent = parent
         self.children = [] # children nodes
         self.num_visits = 0 # number of times node has been visited
-        self.q = 0.0 # simulation reward
+        if heuristic == None:
+            self.q = 0.0
+        else:
+            self.q = heuristic(board)
+        self.heuristic = heuristic
         
     def get_action(self):
         """
@@ -530,6 +534,13 @@ class Node(object):
         """
 
         return self.parent
+
+    def get_heuristic(self):
+        """
+        Return node's initial heuristic.
+        """
+
+        return self.heuristic
 
     def get_children(self):
         """
