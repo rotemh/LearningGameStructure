@@ -17,8 +17,7 @@ def worker(q, rq):
         player, time_limit = q.get()
         print "Running game - %s %s " % (str(player), str(time_limit))
         game_result = custom_vs_uct_game(player,time_limit)
-        print player, time_limit
-        print result
+        print "The game result - ", game_result
         rq.put(game_result)
         q.task_done()
 
