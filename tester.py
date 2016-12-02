@@ -15,7 +15,7 @@ results_q = Queue(maxsize = 0)
 def worker(q, rq):
     while True:
         player, time_limit = q.get()
-        print "Running game - %s %s " % str(player, time_limit)
+        print "Running game - %s %s " % (str(player), str(time_limit))
         game_result = custom_vs_uct_game(player,time_limit)
         rq.put(game_result)
         q.task_done()
