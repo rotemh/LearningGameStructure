@@ -17,7 +17,9 @@ def amcts(policy_agent, value_agent, time_limit):
   policy_player = RLPlayer('policy_player', policy_agent)
 
   def uct_heuristic(board):
-    return value_player.choose_action(board)
+    board_image = board.visualize_image()
+    action_values = value_player.predict_value()
+    return np.max(action_values)
 
   def default_heuristic(board):
     return policy_player.choose_action(board)
