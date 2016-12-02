@@ -17,7 +17,7 @@ def worker(q, rq):
         player, time_limit = q.get()
         print "Running game - %s %s " % str(player, time_limit)
         game_result = custom_vs_uct_game(player,time_limit)
-        rq.push(game_result)
+        rq.put(game_result)
         q.task_done()
 
 def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
@@ -40,7 +40,7 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
     for time_limit in mcts_times:
         wins = 0; ties = 0; losses = 0
         for game_number in xrange(GAMES_PER_DIFFICULTY):
-            global_queue.push((player,time_limit))
+            global_queue.put((player,time_limit))
         global_queue.join()
 
         # Drain results
