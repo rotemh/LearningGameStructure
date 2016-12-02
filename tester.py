@@ -3,8 +3,22 @@ import MCTS.mcts as mcts
 import RL.RLAgent as RLAgent
 import numpy as np
 
+from Queue import Queue
+from threading import Thread
+
 GAMES_PER_DIFFICULTY = 10
 MAX_GAME_MOVES = 42
+
+global_queue = Queue(maxsize = 0)
+results_q = Queue(maxsize = 0)
+
+def worker(q, rq):
+    while True:
+        player, time_limit = q.get()
+        print "Running game - %s %s " % str(player, time_limit)
+        game_result = custom_vs_uct_game(player,time_limit)
+        rq.push(game_result)
+        q.task_done()
 
 def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
     """
@@ -17,20 +31,30 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
         total_time = np.sum(mcts_times)*MAX_GAME_MOVES*GAMES_PER_DIFFICULTY
         print "Estimated testing time: %d seconds" % total_time
 
+    for t in xrange(8):
+        t = Thread(target=worker, args=(global_queue,results_q))
+        t.setDaemon(True)
+        t.start()
+    
     score = []
     for time_limit in mcts_times:
         wins = 0; ties = 0; losses = 0
         for game_number in xrange(GAMES_PER_DIFFICULTY):
-            game_result = custom_vs_uct_game(player,time_limit)
+            global_queue.push((player,time_limit))
+        global_queue.join()
+
+        # Drain results
+        while not results_q.empty():
+            game_result = results_q.get()
             if game_result > 0:
                 wins +=1
             elif game_result ==0:
                 ties +=1
             else:
                 losses +=1
-            if verbose:
-                print "For %.2f-second UCT, won %d, tied %d, lost %d" \
-                          % (time_limit,wins,ties,losses)
+        if verbose:
+            print "For %.2f-second UCT, won %d, tied %d, lost %d" \
+                      % (time_limit,wins,ties,losses)
         score.append(float(wins)/GAMES_PER_DIFFICULTY)
 
     return score
