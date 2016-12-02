@@ -32,7 +32,7 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
         total_time = np.sum(mcts_times)*MAX_GAME_MOVES*GAMES_PER_DIFFICULTY
         print "Estimated testing time: %d seconds" % total_time
 
-    for t in xrange(8):
+    for t in xrange(1):
         t = Thread(target=worker, args=(global_queue,results_q))
         t.setDaemon(True)
         t.start()
