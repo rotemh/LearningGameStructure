@@ -46,6 +46,8 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
         # Drain results
         while not results_q.empty():
             game_result = results_q.get()
+            if verbose:
+                print game_result
             if game_result > 0:
                 wins +=1
             elif game_result ==0:
