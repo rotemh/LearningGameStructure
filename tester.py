@@ -28,8 +28,9 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
                 ties +=1
             else:
                 losses +=1
-        if verbose:
-            print "For %.2f-second UCT, won %d, tied %d, lost %d" % (time_limit,wins,ties,losses)
+            if verbose:
+                print "For %.2f-second UCT, won %d, tied %d, lost %d" \
+                          % (time_limit,wins,ties,losses)
         score.append(float(wins)/GAMES_PER_DIFFICULTY)
 
     return score
@@ -169,20 +170,6 @@ def test_qValues(player, verbose=False):
     assert(action.col != 2)
 
     return 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def main():
     test_player = game.ComputerPlayer('mcts',mcts.uct, .7)

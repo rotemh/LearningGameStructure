@@ -1,12 +1,15 @@
 from keras.models import Sequential,Model
 from keras.layers import Dense, Dropout, Activation, Flatten, Input, merge
 from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers.normalization import BatchNormalization
 from keras.utils import np_utils
 from keras import backend as K
 from keras.callbacks import *
 from keras.preprocessing.image import ImageDataGenerator
+from RL.LossGrapher import LossGrapher
 
 import os
+import pickle
 import numpy as np
 
 class SupervisedPolicyAgent:
@@ -24,25 +27,38 @@ class SupervisedPolicyAgent:
     id_input = Input( shape=(1,),name='player_id',dtype='float32')
     kernel_size = 2
 
-    sup_network_h0 = Convolution2D(nb_filter = 16,
+    sup_network_h0 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
                                    border_mode='same', init=conv_init)(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
-    sup_network_h1 = Convolution2D(nb_filter = 16,
+    sup_network_h1 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h0)
     sup_network_h1 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
-    sup_network_h2 = Convolution2D(nb_filter = 16,
+    sup_network_h2 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h1)
     sup_network_h2 = MaxPooling2D(pool_size=(2,2))(sup_network_h2)
-    sup_network_h2 = Flatten()(sup_network_h1)
+    sup_network_h3 = Convolution2D(nb_filter = 32,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h2)
+    sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
+
+    sup_network_h3 = Convolution2D(nb_filter = 32,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   border_mode='same',init=dense_init)(sup_network_h3)
+    sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
+    sup_network_h2 = Flatten()(sup_network_h3)
+
     sup_network_merge = merge([sup_network_h2,id_input],mode='concat')
+    sup_network_batch_normed = BatchNormalization()(sup_network_merge)
     sup_network_a = Dense(self.num_actions,activation='softmax',
-                            init=dense_init)(sup_network_merge)
+                            init=dense_init)(sup_network_batch_normed)
     V = sup_network_a
     self.sup_policy = Model(input =[s_img,id_input],output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',
@@ -60,6 +76,7 @@ class SupervisedPolicyAgent:
       featurewise_center=True,
       featurewise_std_normalization=True)
     self.datagen.fit(state)
+    pickle.dump( self.datagen,open('./policyWeights/sup/datagen.p','wb'))
 
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     state = np.asarray(state)
@@ -68,28 +85,29 @@ class SupervisedPolicyAgent:
     checkpoint = ModelCheckpoint(filepath=\
                                 './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
                                   monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
-    self.sup_policy.fit([state,player_id],action,nb_epoch=10000,
-                        callbacks=[early,checkpoint],
-                        batch_size = 64,
-                        validation_split = 0.1
-                        )
+    loss_graph = LossGrapher()
+    history = self.sup_policy.fit([state,player_id],action,nb_epoch=10000,
+                          callbacks=[early,checkpoint,loss_graph],
+                          batch_size = 32,
+                          validation_split = 0.25)
+
+  def load_train_results(self):
+    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.369-0.31940.hdf5')
+    self.datagen = pickle.load( open( "./policyWeights/sup/datagen.p", "rb" ) )
   
-  def predict_action(self,s,policy='supervised'):
+  def predict_action(self,s,player_id):
     '''
     This function returns a probability distribution across columns
     when policy is set to supervised. It does nothing when policy
     is not set to supervised since there is no policy_network
     '''
-    s = np.asarray(s)
+    s = (np.asarray(s).copy()).astype('float32')
     s = self.datagen.standardize(s)
 
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
-
-    if policy=='supervised':
-        action_prob = self.sup_policy.predict(s)
-        return action_prob
+    action_prob = self.sup_policy.predict([s,player_id])
+    if np.shape(s)[0] == 1:
+      return action_prob[0]
     else:
-        return self.policy_network.predict(s)
-    
-  
+      return action_prob

@@ -1,0 +1,7 @@
+load('1.mat')
+winner_id = winner_train_data{1,1};
+if winner_id == 0
+    sprintf('winner id is RED')
+end
+figure;imagesc(winner_train_data{1,2})
+

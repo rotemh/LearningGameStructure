@@ -9,11 +9,16 @@ import threading
 from tester import test_policy_vs_MCTS
 
 def generate_supervised_training_data(episode_num, time_limit=0.5, file_path=''):
-  train_data= []
   episode = generate_uct_game(time_limit)
-  win_player_id = np.argmax(episode[-1][-1])
-  winner_train_data = [e for e in episode if e[0] == win_player_id]
-  loser_train_data = [e for e in episode if e[0] != win_player_id]
+  if episode[-1]['terminal_board'] and (episode[-1]['reward'][0] is not episode[-1]['reward'][1]):
+    win_player_id = np.argmax( episode[-1]['reward'] )
+  else:
+    return
+  winner_train_data = [e for e in episode if e['player_id'] == win_player_id]
+  loser_train_data = [e for e in episode if e['player_id'] != win_player_id]
+  train_data['winner_train_data']=winner_train_data
+  train_data['loser_train_data']=loser_train_data
+  pickle.dump( train_data,open(file_path+str(episode_num)+'.p','wb'))
   sio.savemat(file_path + str(episode_num)+'.mat',\
                 {'winner_train_data':winner_train_data,\
                  'loser_train_data':loser_train_data,\
