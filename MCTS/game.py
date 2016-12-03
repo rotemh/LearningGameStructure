@@ -653,9 +653,8 @@ class Simulation(object):
             return self.history
         if json_visualize:
             self.write_visualization_json()
-
-        if state_action_history:
-            return self.history
+            
+        return self.board.reward_vector()[0]
 
     def write_visualization_json(self):
         data = self.board.json_visualize()
