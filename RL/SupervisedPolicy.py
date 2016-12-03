@@ -47,16 +47,18 @@ class SupervisedPolicyAgent:
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h2)
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
-
+    """
     sup_network_h3 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h3)
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
+    """
     sup_network_h2 = Flatten()(sup_network_h3)
-
     sup_network_merge = merge([sup_network_h2,id_input],mode='concat')
+    
     sup_network_batch_normed = BatchNormalization()(sup_network_merge)
+    #TODO: does this make it so that the data is centered? what does batchnormalization actually do?
     sup_network_a = Dense(self.num_actions,activation='softmax',
                             init=dense_init)(sup_network_batch_normed)
     V = sup_network_a
@@ -65,7 +67,25 @@ class SupervisedPolicyAgent:
                             optimizer='adadelta',
                             metrics =['accuracy']
                             )
+
+    # predict intermediate layers
+    """
+    self.cnn_output = Model(input=[s_img],output = sup_network_h3)
+    self.sup_network_merge = Model(input=[s_img],output = sup_network_merge)
+    self.sup_network_batch_noremd = Model(input=[s_img],output = sup_network_batch_normed)
+    """
+  
     self.sup_policy.summary()
+
+  def save_classified_data(self):
+    # saves the output of intermediate layers on correctly classified data
+    # saves the output of intermediate layers on misclassified data
+
+    # saves the misclassified data
+    # saves the correctly classified data
+    pass
+    
+
 
   def update_supervised_policy(self,state,a,player_id):
     state =state.astype('float32')
@@ -90,6 +110,8 @@ class SupervisedPolicyAgent:
                           callbacks=[early,checkpoint,loss_graph],
                           batch_size = 32,
                           validation_split = 0.25)
+
+    self.save_classified_data()
 
   def load_train_results(self):
     self.sup_policy.load_weights('./policyWeights/sup/sup_weights.369-0.31940.hdf5')

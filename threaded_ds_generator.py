@@ -72,7 +72,7 @@ def main():
 		t.setDaemon(True)
 		t.start()
 		
-	for i in xrange(num_of_episodes):
+	for i in range(2512,num_of_episodes):
 		q.put(i)
 	
 	q.join()
