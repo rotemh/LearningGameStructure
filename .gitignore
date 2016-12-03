@@ -2,3 +2,6 @@
 *.swp
 *.pyc
 ./train_data/*
+dataset/*.p
+dataset/*.mat
+
