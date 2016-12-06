@@ -7,6 +7,16 @@ import os
 import sys
 import threading
 from tester import test_policy_vs_MCTS
+from Queue import Queue
+from threading import Thread
+
+q = Queue(maxsize = 0)
+def worker(q):
+  while True:
+    episode_number = q.get()
+    print "Creating epsiode number %s" % str(episode_number)
+    generate_supervised_training_data(episode_number)
+    q.task_done()
 
 def generate_supervised_training_data(episode_num, time_limit=0.5, file_path=''):
   episode = generate_uct_game(time_limit)
@@ -14,6 +24,7 @@ def generate_supervised_training_data(episode_num, time_limit=0.5, file_path='')
     win_player_id = np.argmax( episode[-1]['reward'] )
   else:
     return
+  train_data = {}
   winner_train_data = [e for e in episode if e['player_id'] == win_player_id]
   loser_train_data = [e for e in episode if e['player_id'] != win_player_id]
   train_data['winner_train_data']=winner_train_data
@@ -31,7 +42,19 @@ def main():
   else:
     num_of_episodes = int(sys.argv[1])
 
-  generate_supervised_training_data(num_of_episodes)
+  file_path = 'dataset'
+  if not os.path.isdir(file_path):
+    os.makedirs(file_path)  
+  
+  for t in xrange(8):
+    t = Thread(target=worker, args=(q,))
+    t.setDaemon(True)
+    t.start()
+    
+  for i in xrange(num_of_episodes):
+    q.put(i)
+  
+  q.join()
 
 
 if __name__ == '__main__':

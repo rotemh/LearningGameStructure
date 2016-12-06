@@ -638,8 +638,18 @@ class Simulation(object):
             
             for (player_id, action) in tmp_history:
                 old_board = replay_board
-                replay_board = action.apply(replay_board)
-                self.history.append((player_id, old_board.visualize_image(), action, replay_board.visualize_image(), replay_board.reward_vector()))
+                replay_board = action.apply()
+                entry = {}
+                entry['reward'] = replay_board.reward_vector()
+                entry['player_id'] = player_id
+                entry['s_img'] = old_board.visualize_image()
+                entry['action'] = action
+                entry['sprime_img'] = replay_board.visualize_image()
+                entry['terminal_board'] = 0
+                entry['s'] = copy.copy(old_board)
+                entry['sprime'] = copy.copy(replay_board)
+                self.history.append(entry)
+            self.history[-1]['terminal_board'] = 1
 
         if json_visualize:
             self.write_visualization_json()
