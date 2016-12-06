@@ -33,41 +33,25 @@ def load_supervised_training_data( train_dir ):
         if i==0:
           # skip the very first board position; too much variations
           continue 
-        player_id += [data[i]['player_id']]
-        s_data += [data[i]['s_img']]
-        a += [data[i]['action'].col] # col
-        sprime_data += [data[i]['sprime_img']]
-        reward += [data[i]['reward']]
-        s_config = [data[i]['s']]
-        sprime_config = [data[i]['sprime']]
+        player_id.append(data[i]['player_id'])
+        s_data.append(data[i]['s_img'])
+        a.append(data[i]['action']) # col stored only
+        sprime_data.append(data[i]['sprime_img'])
+        reward.append(data[i]['reward'])
+        s_config = data[i]['s']
+        sprime_config = data[i]['sprime']
 
-        s_board = [ [-1 for j in xrange(np.shape(s_config[-1])[0])] for i in xrange(np.shape(s_config[-1])[1]) ]
-        sprime_board = [[-1 for j in xrange(np.shape(s_config[-1])[0])] for i in xrange(np.shape(s_config[-1])[1])]
-        n_col = np.shape(s_config[-1])[1]
-        n_row = np.shape(s_config[-1])[0]
-        for i in range(n_col):
-          for j in range(n_row):
-            if s_config[-1][i][j] == 'R':
-              s_board[i][j] = 0
-            elif s_config[-1][i][j] == 'B':
-              s_board[i][j] = 1
-            elif s_config[-1][i][j] == '-':
-              s_board[i][j] = -1
-
-            if sprime_config[-1][i][j] == 'R':
-              sprime_board[i][j] = 0
-            elif sprime_config[-1][i][j] == 'B':
-              sprime_board[i][j] = 1
-            elif sprime_config[-1][i][j] == '-':
-              sprime_board[i][j] = -1
-        s_board_data +=[s_board]
-        sprime_board_data += [sprime_board]
+	token = lambda(x) : 0 if x=='R' else (1 if x =='B' else -1)	
+        s_board = [ [token(j) for j in col] for col in s_config ]
+        sprime_board = [[token(j) for j in col] for col in sprime_config]
+        s_board_data.append(s_board)
+        sprime_board_data.append(sprime_board)
 
         if player_id[-1] == 0:
           # value = end reward
-          value += [data[-1]['reward'][0]]
+          value.append(data[-1]['reward'][0])
         else:
-          value += [data[-1]['reward'][1]]
+          value.append(data[-1]['reward'][1])
       if len(a) > 220:
         return np.asarray(s_data),np.asarray(a),\
           np.asarray(player_id),np.asarray(reward),np.asarray(value),\

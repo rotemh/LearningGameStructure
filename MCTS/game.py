@@ -339,9 +339,9 @@ class ConnectFourAction(Action):
         self.row = row
 
     def apply(self, board):
-        if not board.is_legal_action(self):
-            raise Exception('This action is not allowed! => {}'.format(self))
-            
+        #if not board.is_legal_action(self):
+        #    raise Exception('This action is not allowed! => {}'.format(self))
+        #check disabled because it's a pain when modifying game history
         new_board = copy.copy(board)
         new_board.state[self.col][self.row] = self.color
 
@@ -634,27 +634,39 @@ class Simulation(object):
             player = self.players[player_id]
             action = player.choose_action(self.board)
             self.board = player.play_action(action, self.board)
+              
             if state_action_history:
-                self.history.append({'player_id':player_id,
-                                     'action': action,
-                                     's_img': old_board.visualize_image(),
-                                     'sprime_img': self.board.visualize_image(),
-                                     's':old_board.state,
-                                     'sprime':self.board.state, 
-                                     'reward':self.board.reward_vector(),
-                                     'terminal_board': self.board.is_terminal()})
-                #self.history.append((player_id, old_board.visualize_image(), \
-                #                    action, self.board.visualize_image(), \
-                #                    self.board.reward_vector(),old_board.state,self.board.state))
-            else:
-                self.history.append((player_id, action))
-       
-        if state_action_history:
-            return self.history
+                tmp_history.append((player_id, action))
+        winner = player
+
+        if state_action_history: #only works for Connect 4 Board games
+            boardClass = self.board.__class__
+            replay_board = boardClass()
+            if self.players[tmp_history[0][0]] != winner: #winner must be the default start (Red)
+                switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
+                switchPlayerID = lambda x: 1 if x == 0 else 0
+                tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
+            
+            for (player_id, action) in tmp_history:
+                old_board = replay_board
+                replay_board = action.apply(old_board)
+                entry = {}
+                entry['reward'] = replay_board.reward_vector()
+                entry['player_id'] = player_id
+                entry['s_img'] = old_board.visualize_image()
+                entry['action'] = action.col
+                entry['sprime_img'] = replay_board.visualize_image()
+                entry['terminal_board'] = 0
+                entry['s'] = [[x for x in y] for y in old_board.state]
+                entry['sprime'] = [[x for x in y] for y in replay_board.state]
+                self.history.append(entry)
+            self.history[-1]['terminal_board'] = 1
+
         if json_visualize:
             self.write_visualization_json()
             
         return self.board.reward_vector()[0]
+
 
     def write_visualization_json(self):
         data = self.board.json_visualize()
