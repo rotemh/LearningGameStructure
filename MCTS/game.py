@@ -632,7 +632,7 @@ class Simulation(object):
             boardClass = self.board.__class__
             replay_board = boardClass()
             if self.players[tmp_history[0][0]] != winner: #winner must be the default start (Red)
-                switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.Black
+                switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
                 switchPlayerID = lambda x: 1 if x == 0 else 0
                 tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
             
