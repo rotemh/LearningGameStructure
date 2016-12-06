@@ -35,7 +35,7 @@ def load_supervised_training_data( train_dir ):
           continue 
         player_id += [data[i]['player_id']]
         s_data += [data[i]['s_img']]
-        a += [data[i]['action'].col] # col
+        a += [data[i]['action']] # col stored only
         sprime_data += [data[i]['sprime_img']]
         reward += [data[i]['reward']]
         s_config = [data[i]['s']]

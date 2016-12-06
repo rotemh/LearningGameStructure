@@ -9,6 +9,7 @@ import threading
 from tester import test_policy_vs_MCTS
 from Queue import Queue
 from threading import Thread
+import pickle 
 
 q = Queue(maxsize = 0)
 def worker(q):
@@ -30,6 +31,7 @@ def generate_supervised_training_data(episode_num, time_limit=0.5, file_path='')
   train_data['winner_train_data']=winner_train_data
   train_data['loser_train_data']=loser_train_data
   pickle.dump( train_data,open(file_path+str(episode_num)+'.p','wb'))
+  sio.savemat(file_path + 'a.mat', {'w': winner_train_data[0]})
   sio.savemat(file_path + str(episode_num)+'.mat',\
                 {'winner_train_data':winner_train_data,\
                  'loser_train_data':loser_train_data,\
@@ -58,4 +60,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+  main()
+  #generate_supervised_training_data(1)

@@ -643,11 +643,11 @@ class Simulation(object):
                 entry['reward'] = replay_board.reward_vector()
                 entry['player_id'] = player_id
                 entry['s_img'] = old_board.visualize_image()
-                entry['action'] = action
+                entry['action'] = action.col
                 entry['sprime_img'] = replay_board.visualize_image()
                 entry['terminal_board'] = 0
-                entry['s'] = copy.copy(old_board)
-                entry['sprime'] = copy.copy(replay_board)
+                entry['s'] = [[x for x in y] for y in old_board.state]
+                entry['sprime'] = [[x for x in y] for y in replay_board.state]
                 self.history.append(entry)
             self.history[-1]['terminal_board'] = 1
 
