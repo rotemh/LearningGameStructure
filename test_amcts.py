@@ -17,6 +17,7 @@ def amcts(policy_agent, value_agent, time_limit):
   policy_player = RLPlayer('policy_player', policy_agent)
 
   def uct_heuristic(board):
+    return 0
     board_image = board.visualize_image()
     action_values = value_player.predict_value()
     return np.max(action_values)
@@ -31,7 +32,7 @@ def main():
   policy_agent = SupervisedPolicyAgent((144,144,3),8)
   policy_agent.load_train_results()
   value_agent = SupervisedValueNetworkAgent((144,144,3),8)
-  value_agent.load_train_results()
+  #value_agent.load_train_results()
   amcts_algo = amcts(policy_agent,value_agent,1)
   acmts_player = game.RLPlayer('amcts', amcts_algo)
   
