@@ -638,7 +638,7 @@ class Simulation(object):
             
             for (player_id, action) in tmp_history:
                 old_board = replay_board
-                replay_board = action.apply()
+                replay_board = action.apply(old_board)
                 entry = {}
                 entry['reward'] = replay_board.reward_vector()
                 entry['player_id'] = player_id
