@@ -339,9 +339,9 @@ class ConnectFourAction(Action):
         self.row = row
 
     def apply(self, board):
-        if not board.is_legal_action(self):
-            raise Exception('This action is not allowed! => {}'.format(self))
-            
+        #if not board.is_legal_action(self):
+        #    raise Exception('This action is not allowed! => {}'.format(self))
+        #check disabled because it's a pain when modifying game history
         new_board = copy.copy(board)
         new_board.state[self.col][self.row] = self.color
 
