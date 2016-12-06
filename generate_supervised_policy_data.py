@@ -19,7 +19,7 @@ def worker(q):
     generate_supervised_training_data(episode_number)
     q.task_done()
 
-def generate_supervised_training_data(episode_num, time_limit=0.5, file_path=''):
+def generate_supervised_training_data(episode_num, time_limit=0.5, file_path='./dataset/'):
   episode = generate_uct_game(time_limit)
   if episode[-1]['terminal_board'] and (episode[-1]['reward'][0] is not episode[-1]['reward'][1]):
     win_player_id = np.argmax( episode[-1]['reward'] )
@@ -31,7 +31,6 @@ def generate_supervised_training_data(episode_num, time_limit=0.5, file_path='')
   train_data['winner_train_data']=winner_train_data
   train_data['loser_train_data']=loser_train_data
   pickle.dump( train_data,open(file_path+str(episode_num)+'.p','wb'))
-  sio.savemat(file_path + 'a.mat', {'w': winner_train_data[0]})
   sio.savemat(file_path + str(episode_num)+'.mat',\
                 {'winner_train_data':winner_train_data,\
                  'loser_train_data':loser_train_data,\
