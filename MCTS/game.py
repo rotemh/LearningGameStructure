@@ -623,25 +623,29 @@ class Simulation(object):
             player = self.players[player_id]
             action = player.choose_action(self.board)
             self.board = player.play_action(action, self.board)
+              
             if state_action_history:
-                self.history.append({'player_id':player_id,
-                                     'action': action,
-                                     's_img': old_board.visualize_image(),
-                                     'sprime_img': self.board.visualize_image(),
-                                     's':old_board.state,
-                                     'sprime':self.board.state, 
-                                     'reward':self.board.reward_vector(),
-                                     'terminal_board': self.board.is_terminal()})
-                #self.history.append((player_id, old_board.visualize_image(), \
-                #                    action, self.board.visualize_image(), \
-                #                    self.board.reward_vector(),old_board.state,self.board.state))
-            else:
-                self.history.append((player_id, action))
-       
+                tmp_history.append((player_id, action))
+        winner = player
+
+        if state_action_history: #only works for Connect 4 Board games
+            boardClass = self.board.__class__
+            replay_board = boardClass()
+            if self.players[tmp_history[0][0]] != winner: #winner must be the default start (Red)
+                switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.Black
+                switchPlayerID = lambda x: 1 if x == 0 else 0
+                tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
+            
+            for (player_id, action) in tmp_history:
+                old_board = replay_board
+                replay_board = action.apply(replay_board)
+                self.history.append((player_id, old_board.visualize_image(), action, replay_board.visualize_image(), replay_board.reward_vector()))
+
+        if json_visualize:
+            self.write_visualization_json()
+
         if state_action_history:
             return self.history
-        if json_visualize: #no longer works
-            self.write_visualization_json()
 
 
     def write_visualization_json(self):
