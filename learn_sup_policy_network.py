@@ -52,7 +52,7 @@ def load_supervised_training_data( train_dir ):
           value.append(data[-1]['reward'][0])
         else:
           value.append(data[-1]['reward'][1])
-      if len(a) > 220:
+      if len(a) > 1000:
         return np.asarray(s_data),np.asarray(a),\
           np.asarray(player_id),np.asarray(reward),np.asarray(value),\
           np.asarray(s_board_data),np.asarray(sprime_board_data)
