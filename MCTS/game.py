@@ -640,11 +640,9 @@ class Simulation(object):
        
         if state_action_history:
             return self.history
-        if json_visualize:
+        if json_visualize: #no longer works
             self.write_visualization_json()
 
-        if state_action_history:
-            return self.history
 
     def write_visualization_json(self):
         data = self.board.json_visualize()
