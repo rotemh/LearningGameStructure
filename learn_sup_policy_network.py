@@ -64,7 +64,7 @@ def load_supervised_training_data( train_dir ):
     np.asarray(s_board_data),np.asarray(sprime_board_data)
 
 def main():
-  train_dataset_dir = './dataset/'
+  train_dataset_dir = '/home/aradhana/LearningGameStructure/dataset/'
   s_data,a,player_id,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
   rl_agent = SupervisedPolicyAgent((144,144,3),7)
   rl_agent.update_supervised_policy(s_data,a,player_id)
