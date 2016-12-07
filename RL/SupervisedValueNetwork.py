@@ -20,7 +20,7 @@ class SupervisedValueNetworkAgent:
     conv_init = 'lecun_uniform'
     dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
-    id_input = Input( shape=(1,),name='player_id',dtype='float32')
+    #id_input = Input( shape=(1,),name='player_id',dtype='float32')
     kernel_size = 2
 
     sup_network_h0 = Convolution2D(nb_filter = 32,
@@ -51,11 +51,11 @@ class SupervisedValueNetworkAgent:
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
     sup_network_h2 = Flatten()(sup_network_h3)
 
-    sup_network_merge = merge([sup_network_h2],mode='concat')
+    sup_network_merge = sup_network_h2 #merge([sup_network_h2,id_input],mode='concat')
     sup_network_v = Dense(1,activation='linear',
                             init=dense_init)(sup_network_merge)
     V = sup_network_v
-    self.sup_v_network = Model(input =[s_img],output=V)
+    self.sup_v_network = Model(input =s_img,output=V)
     self.sup_v_network.compile(loss='mse',
                             optimizer='adadelta',
                             metrics =['accuracy']
@@ -76,8 +76,7 @@ class SupervisedValueNetworkAgent:
     state = self.datagen.standardize(state)
     checkpoint = ModelCheckpoint(filepath=\
                           './valueNetworkWeights/sup/sup_weights.{epoch:02d}-{val_loss:.5f}.hdf5',\
-                           monitor='val_loss', verbose=0, save_best_only=True, mode='auto')
-    self.sup_v_network.fit([state],v,nb_epoch=10000,
+    self.sup_v_network.fit(state,v,nb_epoch=10000,
                         callbacks=[early,checkpoint],
                         batch_size = 32,
                         validation_split = 0.1

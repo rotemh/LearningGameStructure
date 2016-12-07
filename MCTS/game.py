@@ -101,15 +101,18 @@ class ConnectFourBoard(Board):
     RED = 'R'
     BLACK = 'B'
     EMPTY = '-'
-    NUM_COLS = 8
-    NUM_ROWS = 8
+    NUM_COLS = 7
+    NUM_ROWS = 6
+    NUM_TO_CONNECT = 4
 
     #Image Visualization Parameters:
-    SPACESIZE = 128/NUM_COLS #size of the tokens and board spaces in pixels; make it 128 by 128
-    WINDOWWIDTH  = SPACESIZE * (NUM_COLS +1)# in pixels
-    WINDOWHEIGHT = SPACESIZE * (NUM_ROWS +1) # pixels
-    XMARGIN = int((WINDOWWIDTH - NUM_COLS * SPACESIZE) / 2)
-    YMARGIN = int((WINDOWHEIGHT - NUM_ROWS * SPACESIZE) / 2)
+    SPACESIZE = 20 #size of the tokens and board spaces in pixels; make it 128 by 128
+    WINDOWWIDTH  = 144 #SPACESIZE * (NUM_COLS +1)# in pixels
+    WINDOWHEIGHT = 144 #SPACESIZE * (NUM_ROWS +1) # pixels
+    SPACESIZEX = SPACESIZE
+    SPACESIZEY = SPACESIZE
+    XMARGIN = 0 # int((WINDOWWIDTH - NUM_ROWS * SPACESIZE) / 4)
+    YMARGIN = 0 #int((WINDOWHEIGHT - NUM_COLS * SPACESIZE) / 4)
 
     #Colors
     WHITE = (255, 255, 255)
@@ -163,99 +166,64 @@ class ConnectFourBoard(Board):
             return True
 
         # if every slot is filled, then we've reached a terminal state
-        for col in xrange(ConnectFourBoard.NUM_COLS):
-            for row in xrange(ConnectFourBoard.NUM_ROWS):
+        for inv_row in xrange(ConnectFourBoard.NUM_ROWS):
+            for col in xrange(ConnectFourBoard.NUM_COLS):
+                row = ConnectFourBoard.NUM_ROWS - (inv_row + 1)
                 if self.state[col][row] == ConnectFourBoard.EMPTY:
                     return False
 
         return True
 
-    def _terminal_by_win(self):            
+    def _position_in_board(self, row, col):
+        ''' given two integers, checks whether position is in board '''
+        row_in_range = row >= 0 and row < ConnectFourBoard.NUM_ROWS
+        col_in_range = col >= 0 and col < ConnectFourBoard.NUM_COLS
+        return row_in_range and col_in_range
+
+    def _terminal_by_win(self):    
+        X = ConnectFourBoard.NUM_TO_CONNECT        
         col, row = self.last_move
         color = self.state[col][row]
 
         # vertical
-        four_in_col = self._check_seq(color, self.state[col])
-        if four_in_col:
+        seq = self.state[col][row - (X - 1) : row + 1]
+        if self._check_seq(color, seq):
             return True
         
         # horizontal
-        min_col = max(0, col-3)
-        max_col = min(ConnectFourBoard.NUM_COLS-1, col+3)
-        four_in_row = self._check_seq(color, [self.state[i][row] for i in xrange(min_col, max_col+1)])
-        if four_in_row:
+        min_col = max(0, col - (X -1))
+        max_col = min(ConnectFourBoard.NUM_COLS-1, col+(X-1))
+        seq = [self.state[i][row] for i in xrange(min_col, max_col+1)]
+        if self._check_seq(color, seq):
             return True
 
         # up diagonal
-        coor = self.last_move
-        seq = []
-        valid = True
-        while valid:
-            new_col = coor[0] - 1
-            new_row = coor[1] - 1
-            if new_col < 0 or new_row < 0:
-                valid = False
-            else:
-                coor = (new_col, new_row)
-                seq.append(self.state[coor[0]][coor[1]])
-        seq.reverse()
-        seq.append(color)
-        coor = self.last_move
-        valid = True
-        while valid:
-            new_col = coor[0] + 1
-            new_row = coor[1] + 1
-            if new_col >= ConnectFourBoard.NUM_COLS or new_row >= ConnectFourBoard.NUM_ROWS:
-                valid = False
-            else:
-                coor = (new_col, new_row)
-                seq.append(self.state[coor[0]][coor[1]])
-        four_in_up_diag = self._check_seq(color, seq)
-        if four_in_up_diag:
+        leftSpacesToCheck = -1 * min(row, col, X - 1)
+        rightSpacesToCheck = min(ConnectFourBoard.NUM_COLS - col, ConnectFourBoard.NUM_ROWS - row, X)
+        seq = [self.state[col+i][row+i] for i in xrange(leftSpacesToCheck, rightSpacesToCheck)]
+
+        if self._check_seq(color, seq):
             return True
 
         # down diagonal
-        coor = self.last_move
-        seq = []
-        valid = True
-        while valid:
-            new_col = coor[0] - 1
-            new_row = coor[1] + 1
-            if new_col < 0 or new_row >= ConnectFourBoard.NUM_ROWS:
-                valid = False
-            else:
-                coor = (new_col, new_row)
-                seq.append(self.state[coor[0]][coor[1]])
-        seq.reverse()
-        seq.append(color)
-        coor = self.last_move
-        valid = True
-        while valid:
-            new_col = coor[0] + 1
-            new_row = coor[1] - 1
-            if new_col >= ConnectFourBoard.NUM_COLS or new_row < 0:
-                valid = False
-            else:
-                coor = (new_col, new_row)
-                seq.append(self.state[coor[0]][coor[1]])
-        four_in_down_diag = self._check_seq(color, seq)
-        if four_in_down_diag:
+        leftSpacesToCheck = -1 * min(ConnectFourBoard.NUM_ROWS - row -1, col, X - 1)
+        rightSpacesToCheck = min(ConnectFourBoard.NUM_COLS - col, row + 1, X)
+        seq = [self.state[col+i][row-i] for i in xrange(leftSpacesToCheck, rightSpacesToCheck)]
+
+        if self._check_seq(color, seq):
             return True
         
         return False
 
     def _check_seq(self, color, seq):
-        length = len(seq)
-
-        for i in xrange(length-3):
-            four = True
-            for j in xrange(4):
-                if seq[i+j] != color:
-                    four = False
-                    break
-            if four:
-                return True
-
+        counter = 0 
+        for token in seq:
+            if token == color:
+                counter += 1
+                if counter == ConnectFourBoard.NUM_TO_CONNECT:
+                    return True
+            else:
+                counter = 0
         return False
 
     def reward_vector(self):
@@ -291,8 +259,8 @@ class ConnectFourBoard(Board):
         uses pillow to visualize image and returns a 3d np array.
         '''
         img = Image.new('RGB', (ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT), color=ConnectFourBoard.BGCOLOR)
-        getSpaceRectCoords = lambda x, y: (ConnectFourBoard.XMARGIN + (x * ConnectFourBoard.SPACESIZE), 
-            (y * ConnectFourBoard.SPACESIZE) - ConnectFourBoard.YMARGIN )
+        getSpaceRectCoords = lambda x, y: (ConnectFourBoard.XMARGIN + (x * ConnectFourBoard.SPACESIZEX), 
+            (y * ConnectFourBoard.SPACESIZEY) - ConnectFourBoard.YMARGIN )
             
         for x in xrange(ConnectFourBoard.NUM_COLS):
             for y in reversed(xrange(ConnectFourBoard.NUM_ROWS)):
@@ -371,9 +339,9 @@ class ConnectFourAction(Action):
         self.row = row
 
     def apply(self, board):
-        if not board.is_legal_action(self):
-            raise Exception('This action is not allowed! => {}'.format(self))
-            
+        #if not board.is_legal_action(self):
+        #    raise Exception('This action is not allowed! => {}'.format(self))
+        #check disabled because it's a pain when modifying game history
         new_board = copy.copy(board)
         new_board.state[self.col][self.row] = self.color
 
@@ -512,6 +480,14 @@ class RLPlayer(Player):
         return legal_actions[action_idx]
     raise IllegalArgumentException("This should never have occurred, the game is already over")
 
+  def get_q_value(self, board):
+    board_img = board.visualize_image()
+    if board.turn == ConnectFourBoard.RED:
+        player = 0
+    else:
+        player = 1
+    return self.agent.predict_Q_value(board_img, player)
+  
 class Node(object):
     """
     A class that represents nodes in the MCTS tree.
@@ -635,35 +611,52 @@ class Simulation(object):
     def run(self, visualize=False, json_visualize=False, state_action_history=False):
         self.game_id = str(random.randint(0,3133337))
 
-        while not self.board.is_terminal():
+        tmp_history = [] #player id conscious        
+        while not self.board.is_terminal():#last:
             old_board = self.board
             if visualize:
                 self.board.visualize()
             if json_visualize:
                 self.write_visualization_json()
+
             player_id = self.board.current_player_id()
             player = self.players[player_id]
             action = player.choose_action(self.board)
             self.board = player.play_action(action, self.board)
+              
             if state_action_history:
-                self.history.append({'player_id':player_id,
-                                     'action': action,
-                                     's_img': old_board.visualize_image(),
-                                     'sprime_img': self.board.visualize_image(),
-                                     's':old_board.state,
-                                     'sprime':self.board.state, 
-                                     'reward':self.board.reward_vector(),
-                                     'terminal_board': self.board.is_terminal()})
-                #self.history.append((player_id, old_board.visualize_image(), \
-                #                    action, self.board.visualize_image(), \
-                #                    self.board.reward_vector(),old_board.state,self.board.state))
-            else:
-                self.history.append((player_id, action))
-       
-        if state_action_history:
-            return self.history
+                tmp_history.append((player_id, action))
+        winner = player
+
+        if state_action_history: #only works for Connect 4 Board games
+            boardClass = self.board.__class__
+            replay_board = boardClass()
+            if self.players[tmp_history[0][0]] != winner: #winner must be the default start (Red)
+                switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
+                switchPlayerID = lambda x: 1 if x == 0 else 0
+                tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
+            
+            for (player_id, action) in tmp_history:
+                old_board = replay_board
+                replay_board = action.apply(old_board)
+                entry = {}
+                entry['reward'] = replay_board.reward_vector()
+                entry['player_id'] = player_id
+                entry['s_img'] = old_board.visualize_image()
+                entry['action'] = action.col
+                entry['sprime_img'] = replay_board.visualize_image()
+                entry['terminal_board'] = 0
+                entry['s'] = [[x for x in y] for y in old_board.state]
+                entry['sprime'] = [[x for x in y] for y in replay_board.state]
+                self.history.append(entry)
+            self.history[-1]['terminal_board'] = 1
+
         if json_visualize:
             self.write_visualization_json()
+
+        if state_action_history:
+            return self.history
+
 
     def write_visualization_json(self):
         data = self.board.json_visualize()

@@ -24,7 +24,6 @@ class SupervisedPolicyAgent:
     conv_init = 'lecun_uniform'
     dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
-    id_input = Input( shape=(1,),name='player_id',dtype='float32')
     kernel_size = 2
 
     sup_network_h0 = Convolution2D(nb_filter = 32,
@@ -55,14 +54,14 @@ class SupervisedPolicyAgent:
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
     """
     sup_network_h2 = Flatten()(sup_network_h3)
-    sup_network_merge = merge([sup_network_h2],mode='concat')
+    sup_network_merge = sup_network_h2 #merge([sup_network_h2,id_input],mode='concat')
     
     sup_network_batch_normed = BatchNormalization()(sup_network_merge)
     #TODO: does this make it so that the data is centered? what does batchnormalization actually do?
     sup_network_a = Dense(self.num_actions,activation='softmax',
                             init=dense_init)(sup_network_batch_normed)
     V = sup_network_a
-    self.sup_policy = Model(input =[s_img],output=V)
+    self.sup_policy = Model(input =s_img,output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',
                             optimizer='adadelta',
                             metrics =['accuracy']
@@ -125,7 +124,7 @@ class SupervisedPolicyAgent:
 
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
-    action_prob = self.sup_policy.predict([s])
+    action_prob = self.sup_policy.predict(s)
     if np.shape(s)[0] == 1:
       return action_prob[0]
     else:
