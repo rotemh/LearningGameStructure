@@ -104,6 +104,8 @@ class ConnectFourBoard(Board):
     NUM_COLS = 7
     NUM_ROWS = 6
     NUM_TO_CONNECT = 4
+    RED_ID = 0
+    BLACK_ID=1
 
     #Image Visualization Parameters:
     SPACESIZE = 20 #size of the tokens and board spaces in pixels; make it 128 by 128
@@ -134,6 +136,7 @@ class ConnectFourBoard(Board):
 
         if state is None:
             self.state = [[ConnectFourBoard.EMPTY for j in xrange(ConnectFourBoard.NUM_ROWS)] for i in xrange(ConnectFourBoard.NUM_COLS)]
+            self.turn = ConnectFourBoard.RED
             if np.random.rand() > 0.5:
               self.turn = ConnectFourBoard.RED
             else:
@@ -626,12 +629,12 @@ class Simulation(object):
               
             if state_action_history:
                 tmp_history.append((player_id, action))
-        winner = player
+        winner = player_id # winner is the player that played last. NOTE: What if game ties?
 
         if state_action_history: #only works for Connect 4 Board games
             boardClass = self.board.__class__
             replay_board = boardClass()
-            if self.players[tmp_history[0][0]] != winner: #winner must be the default start (Red)
+            if ConnectFourBoard.RED_ID != winner: # winner must be RED
                 switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
                 switchPlayerID = lambda x: 1 if x == 0 else 0
                 tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]

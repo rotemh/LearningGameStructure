@@ -1,35 +1,31 @@
-#!/usr/bin/python
 from MCTS.sim import *
 #from RL.RLAgent import *
-#from MCTS.game import * 
+from MCTS.game import * 
 import numpy as np
 import scipy.io as sio
 import os
 import sys
 import threading
-#from tester import test_policy_vs_MCTS
+from tester import test_policy_vs_MCTS
 from Queue import Queue
 from threading import Thread
-import pickle
-
-
+import pickle 
 
 q = Queue(maxsize = 0)
 def worker(q):
-	while True:
-		episode_number = q.get()
-		print "Creating epsiode number %s" % str(episode_number)
-		generate_supervised_training_data(episode_number)
-		q.task_done()
-		
+  while True:
+    episode_number = q.get()
+    print "Creating epsiode number %s" % str(episode_number)
+    generate_supervised_training_data(episode_number)
+    q.task_done()
 
-def generate_supervised_training_data(episode_num, time_limit=1, file_path='dataset/'):
-  train_data = {}
+def generate_supervised_training_data(episode_num, time_limit=1, file_path='./dataset/'):
   episode = generate_uct_game(time_limit)
   if episode[-1]['terminal_board'] and (episode[-1]['reward'][0] is not episode[-1]['reward'][1]):
     win_player_id = np.argmax( episode[-1]['reward'] )
   else:
     return
+  train_data = {}
   winner_train_data = [e for e in episode if e['player_id'] == win_player_id]
   loser_train_data = [e for e in episode if e['player_id'] != win_player_id]
   train_data['winner_train_data']=winner_train_data
@@ -41,43 +37,27 @@ def generate_supervised_training_data(episode_num, time_limit=1, file_path='data
                  'uct_time_limit':time_limit})
   return
 
-  """
-  train_data= []
-  episode = generate_uct_game(time_limit)
-  if (episode[-1]['terminal_board']) and (episode[-1]['reward'][0] is not episode[-1]['reward'][1]):
-    win_player_id = np.argmax( episode[-1]['reward'] )
-  else:
-    return
-  winner_train_data = [e for e in episode if e['player_id'] == win_player_id]
-  loser_train_data = [e for e in episode if e['player_id'] != win_player_id]
-  sio.savemat(file_path + str(episode_num)+'.mat',\
-                {'winner_train_data':winner_train_data,\
-                 'loser_train_data':loser_train_data,\
-                 'uct_time_limit':time_limit})
-  return
-  """
-	
 def main():
-	if len(sys.argv) < 2:
-		raise Exception("Syntax: python %s episode_numbers" % (sys.argv[0]))
-	else:
-		num_of_episodes = int(sys.argv[1])
-		
-	file_path = 'dataset'
-	if not os.path.isdir(file_path):
-		os.makedirs(file_path)	
-	
-	for t in xrange(8):
-		t = Thread(target=worker, args=(q,))
-		t.setDaemon(True)
-		t.start()
-		
-	for i in range(2512,num_of_episodes):
-		q.put(i)
-	
-	q.join()
+  if len(sys.argv) < 2:
+    raise Exception("Syntax: python %s episode_numbers" % (sys.argv[0]))
+  else:
+    num_of_episodes = int(sys.argv[1])
 
+  file_path = 'dataset'
+  if not os.path.isdir(file_path):
+    os.makedirs(file_path)  
+  
+  for t in xrange(8):
+    t = Thread(target=worker, args=(q,))
+    t.setDaemon(True)
+    t.start()
+    
+  for i in xrange(num_of_episodes):
+    q.put(i)
+  
+  q.join()
 
 
 if __name__ == '__main__':
-		main()
+  main()
+  #generate_supervised_training_data(1)

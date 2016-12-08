@@ -37,27 +37,6 @@ def generate_supervised_training_data(episode_num, time_limit=0.5, file_path='./
                  'uct_time_limit':time_limit})
   return
 
-def main():
-  if len(sys.argv) < 2:
-    raise Exception("Syntax: python %s episode_numbers" % (sys.argv[0]))
-  else:
-    num_of_episodes = int(sys.argv[1])
-
-  file_path = 'dataset'
-  if not os.path.isdir(file_path):
-    os.makedirs(file_path)  
-  
-  for t in xrange(8):
-    t = Thread(target=worker, args=(q,))
-    t.setDaemon(True)
-    t.start()
-    
-  for i in xrange(num_of_episodes):
-    q.put(i)
-  
-  q.join()
-
 
 if __name__ == '__main__':
-  main()
-  #generate_supervised_training_data(1)
+  generate_supervised_training_data(1)
