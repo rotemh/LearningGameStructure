@@ -6,6 +6,7 @@ from game import *
 # monte carlo tree search algorithm using UCT heuristic
 # Input: class Board represents the current game board
 #        time limit of calculation in second
+#        (optional) heuristic function to warm-start MCTS
 # Output: class Action represents the best action to take
 ##########################################################
 def main():
@@ -53,6 +54,18 @@ def uct_timed(board, time_limit):
         
     return best_child(root, 0).get_action()
 
+def uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic):
+    # record start time
+    start_time = time.time()
+    root = Node(board, None, None, uct_heuristic)
+    c = 1
+    
+    while time.time() - start_time < time_limit:
+        tree_terminal = tree_policy(root, c)
+        reward_vector = default_policy_external(tree_terminal.get_board(), default_heuristic)
+        backup(tree_terminal, reward_vector)
+    return best_child(root, 0).get_action() # where is this tree node coming from?
+
 ###########################################################
 # heuristically search to the leaf level
 # Input: a node that want to search down and the
@@ -90,7 +103,7 @@ def expand(node):
             break
     
     new_board = action.apply(board)
-    child = Node(new_board, action, node)
+    child = Node(new_board, action, node, node.get_heuristic())
     node.add_child(child)
     return child
 
@@ -134,6 +147,13 @@ def default_policy_timed(board, time_limit):
     while not board.is_terminal():
         actions = board.get_legal_actions()
         action = random.choice(list(actions))
+        board = action.apply(board)
+
+    return board.reward_vector()
+
+def default_policy_external(board, external_policy):
+    while not board.is_terminal():
+        action = external_policy(board)
         board = action.apply(board)
 
     return board.reward_vector()
