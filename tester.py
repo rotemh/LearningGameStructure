@@ -1,6 +1,7 @@
 import MCTS.game as game
 import MCTS.mcts as mcts
 import numpy as np
+from MCTS.sim import *
 from RL.SupervisedPolicy import *
 
 from Queue import Queue
@@ -36,7 +37,7 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
     for time_limit in mcts_times:
         wins = 0; ties = 0; losses = 0
         for game_number in xrange(GAMES_PER_DIFFICULTY):
-          episode = custom_vs_uct_game(player,time_limit)
+          episode = generate_custom_vs_uct_game(player,time_limit)
           win_player_id = np.argmax( episode[-1]['reward'] )
           if verbose:
             winner_player_color = lambda x: "RED" if x==0 else "BLACK"
@@ -56,19 +57,6 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
           episodes.append(episode)
     return score,episodes
 
-def custom_vs_uct_game(player1,uct_time_limit=1.0):
-    """
-    Run a custom player versus a uct MCTS player
-
-    Returns 1 if custom player won, 0 if tie, -1 if MCTS won
-    """
-    # The higher the time_limit, the better the players will perform
-    board = game.ConnectFourBoard()
-    player2 = game.ComputerPlayer('mcts', mcts.uct, uct_time_limit)
-
-    sim = game.Simulation(board, player1, player2)
-    result = sim.run(visualize=False,state_action_history=False,testing = True)
-    return result
 
 def test_qValues(player, verbose=False):
     """

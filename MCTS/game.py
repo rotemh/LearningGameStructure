@@ -645,6 +645,7 @@ class Simulation(object):
 
         boardClass = self.board.__class__
         replay_board = boardClass()
+        #TODO: For value network, always predict the value of red player, but he does not always win.
         if (ConnectFourBoard.RED_ID != winner) and (not testing): # winner must be RED
             switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
             switchPlayerID = lambda x: 1 if x == 0 else 0

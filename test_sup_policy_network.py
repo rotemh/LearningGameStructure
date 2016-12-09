@@ -7,8 +7,6 @@ import os
 from tester import test_policy_vs_MCTS
 import tensorflow as tf
 from keras import backend as K
-from learn_sup_policy_network import load_supervised_training_data
-from tester import custom_vs_uct_game
 
 import MCTS.mcts as mcts
 def main():
