@@ -1,6 +1,7 @@
 from MCTS.sim import *
 #from RL.RLAgent import *
 from MCTS.game import * 
+from RL.SupervisedPolicy import SupervisedPolicyAgent
 import numpy as np
 import scipy.io as sio
 import os
@@ -10,52 +11,59 @@ from tester import test_policy_vs_MCTS
 from Queue import Queue
 from threading import Thread
 import pickle 
+from train_data_generate_functions import *
 
 q = Queue(maxsize = 0)
-def worker(q):
+def worker_p(q):
   while True:
     episode_number = q.get()
     print "Creating epsiode number %s" % str(episode_number)
-    generate_supervised_training_data(episode_number)
+    generate_policy_training_data(episode_number)
     q.task_done()
 
-def generate_supervised_training_data(episode_num, time_limit=1, file_path='./dataset/'):
-  episode = generate_uct_game(time_limit)
-  if episode[-1]['terminal_board'] and (episode[-1]['reward'][0] is not episode[-1]['reward'][1]):
-    win_player_id = np.argmax( episode[-1]['reward'] )
-  else:
-    return
-  train_data = {}
-  winner_train_data = [e for e in episode if e['player_id'] == win_player_id]
-  loser_train_data = [e for e in episode if e['player_id'] != win_player_id]
-  train_data['winner_train_data']=winner_train_data
-  train_data['loser_train_data']=loser_train_data
-  pickle.dump( train_data,open(file_path+str(episode_num)+'.p','wb'))
-  sio.savemat(file_path + str(episode_num)+'.mat',\
-                {'winner_train_data':winner_train_data,\
-                 'loser_train_data':loser_train_data,\
-                 'uct_time_limit':time_limit})
-  return
+def worker_v(q):
+  while True:
+    episode_number = q.get()
+    print "Creating epsiode number %s" % str(episode_number)
+    generate_v_training_data(episode_number)
+    q.task_done()
 
 def main():
   if len(sys.argv) < 2:
     raise Exception("Syntax: python %s episode_numbers" % (sys.argv[0]))
   else:
     num_of_episodes = int(sys.argv[1])
+    train_data_type = sys.argv[2]
 
-  file_path = 'dataset'
+  if train_data_type =='v':
+    file_path = 'v_dataset'
+  elif train_data_type == 'p':
+    file_path = 'dataset'
+  else:
+    print "Wrong train data type"
+    return
   if not os.path.isdir(file_path):
     os.makedirs(file_path)  
   
-  for t in xrange(8):
-    t = Thread(target=worker, args=(q,))
-    t.setDaemon(True)
-    t.start()
+  if train_data_type == 'p':
+    for t in xrange(8):
+      t = Thread(target=worker_p, args=(q,))
+      t.setDaemon(True)
+      t.start()
+      
+    for i in xrange(num_of_episodes):
+      q.put(i)
     
-  for i in xrange(num_of_episodes):
-    q.put(i)
-  
-  q.join()
+    q.join()
+  else:
+    print 'generating value network data'
+    rl_agent = SupervisedPolicyAgent((144,144,3),7)
+    rl_agent.load_train_results()  
+    rl_player = game.RLPlayer('algo_1', rl_agent)
+    
+    for i in xrange(2200,num_of_episodes):
+      print 'generating episode = ' + str(i)
+      generate_v_training_data(i,rl_player)
 
 
 if __name__ == '__main__':

@@ -635,9 +635,9 @@ class Simulation(object):
 
             player_id = self.board.current_player_id()
             player = self.players[player_id] #players[0] is always red player?
-            stime = time.time()
+        #    stime = time.time()
             action = player.choose_action(self.board)
-            print 'Player '+ str(player_id) + ' took ' + str(time.time() - stime)
+        #    print 'Player '+ str(player_id) + ' took ' + str(time.time() - stime)
             self.board = player.play_action(action, self.board)
               
             tmp_history.append((player_id, action))

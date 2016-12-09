@@ -13,7 +13,7 @@ import os
 import numpy as np
 
 class SupervisedValueNetworkAgent:
-  def __init__(self,img_shape,num_actions):
+  def __init__(self,img_shape):
     self.img_shape = img_shape 
     self.create_supervised_v_network_model()
 
