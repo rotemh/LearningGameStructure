@@ -1,7 +1,7 @@
 import MCTS.game as game
 import MCTS.mcts as mcts
-import RL.RLAgent as RLAgent
 import numpy as np
+from RL.SupervisedPolicy import *
 
 from Queue import Queue
 from threading import Thread
@@ -30,36 +30,31 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
     if verbose:
         total_time = np.sum(mcts_times)*MAX_GAME_MOVES*GAMES_PER_DIFFICULTY
         print "Estimated testing time: %d seconds" % total_time
-
-    for t in xrange(8):
-        t = Thread(target=worker, args=(global_queue,results_q))
-        t.setDaemon(True)
-        t.start()
     
     score = []
+    episodes = []
     for time_limit in mcts_times:
         wins = 0; ties = 0; losses = 0
         for game_number in xrange(GAMES_PER_DIFFICULTY):
-            global_queue.put((player,time_limit))
-        global_queue.join()
+          episode = custom_vs_uct_game(player,time_limit)
+          win_player_id = np.argmax( episode[-1]['reward'] )
+          if verbose:
+            winner_player_color = lambda x: "RED" if x==0 else "BLACK"
+            print "Winner player is " + winner_player_color(win_player_id)
+          print episode[-1]['reward']
+          if np.sum(episode[-1]['reward'] == 0):
+            ties +=1
+          if win_player_id == 0:
+            wins += 1
+          else:
+            losses += 1
 
-        # Drain results' queue
-        while not results_q.empty():
-            game_result = results_q.get()
-            if verbose:
-                print game_result
-            if game_result > 0:
-                wins +=1
-            elif game_result ==0:
-                ties +=1
-            else:
-                losses +=1
-        if verbose:
-            print "For %.2f-second UCT, won %d, tied %d, lost %d" \
-                      % (time_limit,wins,ties,losses)
-        score.append(float(wins)/GAMES_PER_DIFFICULTY)
-
-    return score
+          if verbose:
+              print "For %.2f-second UCT, won %d, tied %d, lost %d" \
+                        % (time_limit,wins,ties,losses)
+          score.append(float(wins)/GAMES_PER_DIFFICULTY)
+          episodes.append(episode)
+    return score,episodes
 
 def custom_vs_uct_game(player1,uct_time_limit=1.0):
     """
@@ -72,7 +67,7 @@ def custom_vs_uct_game(player1,uct_time_limit=1.0):
     player2 = game.ComputerPlayer('mcts', mcts.uct, uct_time_limit)
 
     sim = game.Simulation(board, player1, player2)
-    result = sim.run(visualize=False,state_action_history=False)
+    result = sim.run(visualize=False,state_action_history=False,testing = True)
     return result
 
 def test_qValues(player, verbose=False):

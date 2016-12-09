@@ -2,6 +2,7 @@ import math
 import copy
 import json
 import random
+import time
 
 from pprint import pprint
 
@@ -474,11 +475,10 @@ class RLPlayer(Player):
     legal_actions = board.get_legal_actions()
     
     if len(legal_actions) > 0:
-        if board.turn == board.RED:
-          column_prob_dist = self.agent.predict_action(board_img,np.asarray([0]))
-        else:
-          column_prob_dist = self.agent.predict_action(board_img,np.asarray([1]))
+        column_prob_dist = self.agent.predict_action(board_img)
+    #    print column_prob_dist
         legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
+    #    print legal_column_prob_dist
         action_idx = np.argmax(legal_column_prob_dist) 
         return legal_actions[action_idx]
     raise IllegalArgumentException("This should never have occurred, the game is already over")
@@ -608,10 +608,10 @@ class Simulation(object):
     def __init__(self, board, *players):
         self.init_board = board
         self.board = board
-        self.players = players
+        self.players = players # players[0] is always red player?
         self.history = []
 
-    def run(self, visualize=False, json_visualize=False, state_action_history=False):
+    def run(self, visualize=False, json_visualize=False, state_action_history=False, testing=False):
         self.game_id = str(random.randint(0,3133337))
 
         tmp_history = [] #player id conscious        
@@ -623,42 +623,41 @@ class Simulation(object):
                 self.write_visualization_json()
 
             player_id = self.board.current_player_id()
-            player = self.players[player_id]
+            player = self.players[player_id] #players[0] is always red player?
+            stime = time.time()
             action = player.choose_action(self.board)
+            print 'Player '+ str(player_id) + ' took ' + str(time.time() - stime)
             self.board = player.play_action(action, self.board)
               
-            if state_action_history:
-                tmp_history.append((player_id, action))
+            tmp_history.append((player_id, action))
         winner = player_id # winner is the player that played last. NOTE: What if game ties?
 
-        if state_action_history: #only works for Connect 4 Board games
-            boardClass = self.board.__class__
-            replay_board = boardClass()
-            if ConnectFourBoard.RED_ID != winner: # winner must be RED
-                switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
-                switchPlayerID = lambda x: 1 if x == 0 else 0
-                tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
-            
-            for (player_id, action) in tmp_history:
-                old_board = replay_board
-                replay_board = action.apply(old_board)
-                entry = {}
-                entry['reward'] = replay_board.reward_vector()
-                entry['player_id'] = player_id
-                entry['s_img'] = old_board.visualize_image()
-                entry['action'] = action.col
-                entry['sprime_img'] = replay_board.visualize_image()
-                entry['terminal_board'] = 0
-                entry['s'] = [[x for x in y] for y in old_board.state]
-                entry['sprime'] = [[x for x in y] for y in replay_board.state]
-                self.history.append(entry)
-            self.history[-1]['terminal_board'] = 1
+        boardClass = self.board.__class__
+        replay_board = boardClass()
+        if (ConnectFourBoard.RED_ID != winner) and (not testing): # winner must be RED
+            switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
+            switchPlayerID = lambda x: 1 if x == 0 else 0
+            tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
+        
+        for (player_id, action) in tmp_history:
+            old_board = replay_board
+            replay_board = action.apply(old_board)
+            entry = {}
+            entry['reward'] = replay_board.reward_vector()
+            entry['player_id'] = player_id
+            entry['s_img'] = old_board.visualize_image()
+            entry['action'] = action.col
+            entry['sprime_img'] = replay_board.visualize_image()
+            entry['terminal_board'] = 0
+            entry['s'] = [[x for x in y] for y in old_board.state]
+            entry['sprime'] = [[x for x in y] for y in replay_board.state]
+            self.history.append(entry)
+        self.history[-1]['terminal_board'] = 1
 
         if json_visualize:
             self.write_visualization_json()
 
-        if state_action_history:
-            return self.history
+        return self.history
 
 
     def write_visualization_json(self):

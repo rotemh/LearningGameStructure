@@ -46,13 +46,6 @@ class SupervisedPolicyAgent:
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h2)
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
-    """
-    sup_network_h3 = Convolution2D(nb_filter = 32,
-                                   nb_row=kernel_size,
-                                   nb_col=kernel_size, 
-                                   border_mode='same',init=dense_init)(sup_network_h3)
-    sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
-    """
     sup_network_h2 = Flatten()(sup_network_h3)
     sup_network_merge = sup_network_h2 #merge([sup_network_h2,id_input],mode='concat')
     
@@ -68,21 +61,18 @@ class SupervisedPolicyAgent:
                             )
 
     # predict intermediate layers
-    """
-    self.cnn_output = Model(input=[s_img],output = sup_network_h3)
-    self.sup_network_merge = Model(input=[s_img],output = sup_network_merge)
-    self.sup_network_batch_noremd = Model(input=[s_img],output = sup_network_batch_normed)
-    """
+    self.h0_output = Model(input=[s_img],output = sup_network_h0)
+    self.h1_output = Model(input=[s_img],output = sup_network_h1)
+    self.h2_output = Model(input=[s_img],output = sup_network_h2)
+    self.h3_output = Model(input=[s_img],output = sup_network_h3)
   
     self.sup_policy.summary()
 
-  def save_classified_data(self):
-    # saves the output of intermediate layers on correctly classified data
-    # saves the output of intermediate layers on misclassified data
-
-    # saves the misclassified data
-    # saves the correctly classified data
-    pass
+  def get_intermediate_layer_outputs(self,s):
+    s = (np.asarray(s).copy()).astype('float32')
+    s = self.datagen.standardize(s)
+    return self.h0_output.predict(s),self.h1_output.predict(s),\
+            self.h2_output.predict(s),self.h3_output.predict(s),\
     
   def update_supervised_policy(self,state,a,player_id):
     state =state.astype('float32')
@@ -110,7 +100,7 @@ class SupervisedPolicyAgent:
     self.save_classified_data()
 
   def load_train_results(self):
-    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.369-0.31940.hdf5')
+    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.22-0.38204.hdf5')
     self.datagen = pickle.load( open( "./policyWeights/sup/datagen.p", "rb" ) )
   
   def predict_action(self,s):
@@ -129,3 +119,5 @@ class SupervisedPolicyAgent:
       return action_prob[0]
     else:
       return action_prob
+
+

@@ -12,7 +12,7 @@ def main():
   #import pdb;pdb.set_trace()
   s_data,a,player_id,r,value,_,_= load_supervised_training_data(train_dataset_dir)
   rl_agent = SupervisedValueNetworkAgent((144,144,3),7)
-  rl_agent.update_v_network(s_data,player_id,value)
+  rl_agent.update_v_network(s_data,value)
 
 if __name__ == '__main__':
     main()
