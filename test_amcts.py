@@ -34,7 +34,7 @@ def main():
   policy_agent.load_train_results()
   value_agent = SupervisedValueNetworkAgent((144,144,3))
   #value_agent.load_train_results()
-  amcts_algo = amcts(policy_agent,value_agent,5)
+  amcts_algo = amcts(policy_agent,value_agent,2)
   amcts_player = game.ComputerPlayer('amcts', amcts_algo)
   
   test_policy_vs_MCTS(amcts_player,verbose=True)
