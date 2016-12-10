@@ -46,3 +46,4 @@ class LossGrapher(Callback):
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.savefig('./lossPlot/model_loss_epoch.png',dpi=fig.dpi)
+    plt.close('all')

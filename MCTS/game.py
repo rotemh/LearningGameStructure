@@ -476,20 +476,23 @@ class RLPlayer(Player):
     
     if len(legal_actions) > 0:
         column_prob_dist = self.agent.predict_action(board_img)
-    #    print column_prob_dist
         legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
-    #    print legal_column_prob_dist
         action_idx = np.argmax(legal_column_prob_dist) 
         return legal_actions[action_idx]
     raise IllegalArgumentException("This should never have occurred, the game is already over")
 
-  def get_q_value(self, board):
-    board_img = board.visualize_image()
-    if board.turn == ConnectFourBoard.RED:
-        player = 0
-    else:
-        player = 1
-    return self.agent.predict_Q_value(board_img, player)
+
+class ValueNetworkPlayer(Player):
+  def __init__(self,name,agent):
+    Player.__init__(self,name)
+    self.agent = agent
+  
+  def choose_action(self,board):
+      """
+      board_img = board.visualize_image()
+      self.agent.predict_value(board_img)
+      """
+      pass
   
 class Node(object):
     """

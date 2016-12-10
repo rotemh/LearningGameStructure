@@ -71,21 +71,20 @@ class SupervisedValueNetworkAgent:
     state = self.datagen.standardize(state)
     checkpoint = ModelCheckpoint(filepath=\
                           './valueNetworkWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
-                          monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
+                          monitor='val_loss', verbose=0, save_best_only=True, mode='auto')
     loss_graph = LossGrapher()
     self.sup_v_network.fit(state,v,nb_epoch=10000,
                         callbacks=[early,checkpoint,loss_graph],
                         batch_size = 32,
-                        validation_split = 0.25
-                        )
+                        validation_split = 0.25)
+
   def load_train_results(self):
-    self.sup_v_network.load_weights('./valueNetworkWeights/sup/sup_weights.22-0.38204.hdf5')
-    self.datagen = pickle.load( open( "./valueNetworkWeights/sup/datagen.p", "rb" ) )
+    self.sup_v_network.load_weights('./valueNetworkWeights/sup/sup_weights.04-0.92093.hdf5')
+    self.datagen = pickle.load( open( "./valueNetworkWeights/sup/datagen.p" ) )
   
   def predict_value(self,s):
-    s = np.asarray(s)
+    s = (np.asarray(s).copy()).astype('float32')
     s = self.datagen.standardize(s)
-
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
 
