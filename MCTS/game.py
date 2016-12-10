@@ -460,10 +460,10 @@ class ComputerPlayer(Player):
         else:
             return self.algo(board)
 
-class RLPlayer(Player):
+class PolicyPlayer(Player):
   """
-  Reinforcement learning player that takes a
-  RLAgent obejct and provides an action by
+  Policy-based player that takes a
+  SupervisedPolicyAgent obejct and provides an action by
   predicting from the board image
   """
   def __init__(self,name,agent):
@@ -477,22 +477,31 @@ class RLPlayer(Player):
     if len(legal_actions) > 0:
         column_prob_dist = self.agent.predict_action(board_img)
         legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
-        action_idx = np.argmax(legal_column_prob_dist) 
+        action_idx = np.argmax(legal_column_prob_dist)
         return legal_actions[action_idx]
     raise IllegalArgumentException("This should never have occurred, the game is already over")
 
-
-class ValueNetworkPlayer(Player):
+class ValuePlayer(Player):
+  """
+  Heuristic player that takes a SupervisedValueNetworkAgent
+  object, and provides an action by picking the
+  best action according to the future actions' estimated values
+  """
   def __init__(self,name,agent):
     Player.__init__(self,name)
     self.agent = agent
   
-  def choose_action(self,board):
-      """
-      board_img = board.visualize_image()
-      self.agent.predict_value(board_img)
-      """
-      pass
+  def choose_action(self, board):
+    board_img = board.visualize_image()
+    legal_actions = board.get_legal_actions()
+
+    action_values = []
+    for action in legal_actions:
+        next_board_img = action.apply(board).visualize_image()
+        action_value = self.agent.predict_value(next_board_img)
+        action_values.append(action_value)
+    best_idx = np.argmax(action_values)
+    return legal_actions[best_idx]
   
 class Node(object):
     """

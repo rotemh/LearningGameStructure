@@ -159,7 +159,6 @@ def default_policy_external(board, external_policy):
     while not board.is_terminal():
         action = external_policy(board)
         board = action.apply(board)
-
     return board.reward_vector()
 
 ###########################################################
