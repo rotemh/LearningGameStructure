@@ -482,14 +482,6 @@ class RLPlayer(Player):
         action_idx = np.argmax(legal_column_prob_dist) 
         return legal_actions[action_idx]
     raise IllegalArgumentException("This should never have occurred, the game is already over")
-
-  def get_q_value(self, board):
-    board_img = board.visualize_image()
-    if board.turn == ConnectFourBoard.RED:
-        player = 0
-    else:
-        player = 1
-    return self.agent.predict_Q_value(board_img, player)
   
 class Node(object):
     """

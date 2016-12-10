@@ -24,6 +24,9 @@ def uct(board, time_limit):
         tree_terminal = tree_policy(root, c)
         reward_vector = default_policy(tree_terminal.get_board())
         backup(tree_terminal, reward_vector)
+
+    print "UCT ran with %d visits"%root.get_num_visits()
+
     return best_child(root, 0).get_action() # where is this tree node coming from?
 
 def uct_fixed_horizon(board, time_limit):
@@ -64,6 +67,7 @@ def uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic):
         tree_terminal = tree_policy(root, c)
         reward_vector = default_policy_external(tree_terminal.get_board(), default_heuristic)
         backup(tree_terminal, reward_vector)
+    print "AMCTS ran with %d visits"%root.get_num_visits()
     return best_child(root, 0).get_action() # where is this tree node coming from?
 
 ###########################################################
