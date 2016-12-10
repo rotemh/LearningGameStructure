@@ -2,6 +2,7 @@ from MCTS.sim import *
 from RL.SupervisedPolicy import *
 from RL.SupervisedValueNetwork import *
 from MCTS.game import * 
+from MCTS.mcts import *
 import numpy as np
 import scipy.io as sio
 import os
@@ -25,18 +26,18 @@ def amcts(policy_agent, value_agent, time_limit):
   def default_heuristic(board):
     return policy_player.choose_action(board)
 
-  algo = uct_with_heuristics(time_limit, uct_heuristic, default_heuristic)
+  algo = lambda board: uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic)
   return algo
 
 def main():
-  policy_agent = SupervisedPolicyAgent((144,144,3),8)
+  policy_agent = SupervisedPolicyAgent((144,144,3),7)
   policy_agent.load_train_results()
-  value_agent = SupervisedValueNetworkAgent((144,144,3),8)
+  value_agent = SupervisedValueNetworkAgent((144,144,3))
   #value_agent.load_train_results()
-  amcts_algo = amcts(policy_agent,value_agent,1)
-  acmts_player = game.RLPlayer('amcts', amcts_algo)
+  amcts_algo = amcts(policy_agent,value_agent,5)
+  amcts_player = game.ComputerPlayer('amcts', amcts_algo)
   
-  test_policy_vs_MCTS(amcts,mcts_times=[0.5],verbose=True)
+  test_policy_vs_MCTS(amcts_player,verbose=True)
 
 if __name__ == '__main__':
     main()

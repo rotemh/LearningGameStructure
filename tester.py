@@ -42,7 +42,7 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
           if verbose:
             winner_player_color = lambda x: "RED" if x==0 else "BLACK"
             print "Winner player is " + winner_player_color(win_player_id)
-          print episode[-1]['reward']
+          #print episode[-1]['reward']
           if np.sum(episode[-1]['reward'] == 0):
             ties +=1
           if win_player_id == 0:
