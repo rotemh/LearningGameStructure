@@ -18,12 +18,16 @@ def amcts(policy_agent, value_agent, time_limit):
   policy_player = RLPlayer('policy_player', policy_agent)
 
   def uct_heuristic(board):
-    return 0
     board_image = board.visualize_image()
     action_values = value_player.predict_value()
     return np.max(action_values)
 
   def default_heuristic(board):
+    actions = board.get_legal_actions()
+    action = random.choice(list(actions))
+    return action
+
+    # Currently ignoring default heuristic
     return policy_player.choose_action(board)
 
   algo = lambda board: uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic)
@@ -33,7 +37,7 @@ def main():
   policy_agent = SupervisedPolicyAgent((144,144,3),7)
   policy_agent.load_train_results()
   value_agent = SupervisedValueNetworkAgent((144,144,3))
-  #value_agent.load_train_results()
+  value_agent.load_train_results()
   amcts_algo = amcts(policy_agent,value_agent,2)
   amcts_player = game.ComputerPlayer('amcts', amcts_algo)
   
