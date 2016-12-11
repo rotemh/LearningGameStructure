@@ -23,9 +23,33 @@ def create_players():
         action = np.random.choice(list(actions))
         return action
 
+    def custom_algo(board):
+        """
+        Tries to play in the middle column, then in the 3rd and 5th, and then elsewhere, randomly
+        """
+        actions = board.get_legal_actions()
+        middle_columns = [2,3,4]
+        center_column = 3
+        middle_actions = []
+        center_action = False
+        for action in actions:
+            if action.col == center_column:
+                center_action = action
+            if action.col in middle_columns:
+                middle_actions.append(action)
+
+        if center_action:
+            return center_action
+
+        if len(middle_actions) > 0:
+            return np.random.choice(middle_actions)
+
+        return np.random.choice(actions)
+
     p_only = PolicyPlayer('policy_only', policy_agent)
     v_only = ValuePlayer('value_only', value_agent)
     random = ComputerPlayer('random', random_algo)
+    custom_center_player = ComputerPlayer('custom_center', custom_algo)
 
     uct_p05 =  ComputerPlayer('UCT_p05s', mcts.uct, 0.05)
     uct_p3 =  ComputerPlayer('UCT_p3s', mcts.uct, 0.3)
@@ -45,15 +69,18 @@ def create_players():
     amcts_1 = AMCTSPlayer('AMCTS_1s', 1, policy_agent=policy_agent, value_agent=value_agent)
     amcts_3 = AMCTSPlayer('AMCTS_3s', 3, policy_agent=policy_agent, value_agent=value_agent)
 
-    return [p_only,v_only,random,\
+    return [p_only,v_only,random,custom_center_player\
             uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
             amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3]
 
-def compare_players(player1, player2, verbose=False, num_games = 5):
+def compare_players(player1, player2, verbose=False, symmetric=True, num_games = 5):
     """
     Takes in two MCTS/game.py Player instance, and compares them with each other
-    Returns two score vectors from 0 to 1 of % of games starting player won 
-    given first player started, and then given second started
+    The "1st start score" is the fraction of games won by player1 when player1 starts
+    The "2nd start score" is the fraction of games won by player2 when player2 starts
+
+    If "symmetric" is enabled, only returns 1st start score
+    Otherwise, computes both and returns ("1st start score", "2nd start score")
 
     num_games - the number of games played through for each side
     """
@@ -70,7 +97,7 @@ def compare_players(player1, player2, verbose=False, num_games = 5):
         except AttributeError:
             pass
         time_per_move = time_per_move/2. # take the average
-        total_time = 2*num_games*MAX_GAME_MOVES*time_per_move
+        total_time = (1 + symmetric)*num_games*MAX_GAME_MOVES*time_per_move
         print "Testing %s vs. %s" %(player1.name, player2.name)
         print "Max testing time: %d seconds" % total_time
 
@@ -87,6 +114,9 @@ def compare_players(player1, player2, verbose=False, num_games = 5):
             first_start_score+=1
         else:
             pass
+
+    if not symmetric:
+        return first_start_score
 
     second_start_score = 0
     for game in xrange(num_games):
@@ -105,7 +135,7 @@ def compare_players(player1, player2, verbose=False, num_games = 5):
 
 
 def main():
-    p_only,v_only,random,\
+    p_only,v_only,random,custom_center_player\
     uct_p05,uct_p3,uct_p5,uct_1,uct_3,\
     amcts_p05,amcts_p3,amcts_p5,amcts_1,amcts_3 = create_players()
     win_pct_1, win_pct_2 = compare_players(amcts_p5,uct_p5, verbose=True, num_games=20)
