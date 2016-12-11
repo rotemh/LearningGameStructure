@@ -37,7 +37,7 @@ class AMCTSPlayer(ComputerPlayer):
     def default_heuristic(board):
       actions = board.get_legal_actions()
 
-      if self.policy_agent == None or np.random.rand < np.rollout_randomness:      
+      if self.policy_agent == None or np.random.rand() < np.rollout_randomness:      
         action = np.random.choice(list(actions))
         return action
 
