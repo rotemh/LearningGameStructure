@@ -56,7 +56,6 @@ class SupervisedValueNetworkAgent:
                             optimizer='adadelta',
                             metrics =['accuracy']
                             )
-    self.sup_v_network.summary()
 
   def update_v_network(self,state,v):
     state =state.astype('float32')
@@ -81,6 +80,8 @@ class SupervisedValueNetworkAgent:
   def load_train_results(self):
     self.sup_v_network.load_weights('./valueNetworkWeights/sup/sup_weights.04-0.92093.hdf5')
     self.datagen = pickle.load( open( "./valueNetworkWeights/sup/datagen.p" ) )
+    mock_s = np.zeros((1,144,144,3))
+    self.predict_value(mock_s)
   
   def predict_value(self,s):
     s = (np.asarray(s).copy()).astype('float32')

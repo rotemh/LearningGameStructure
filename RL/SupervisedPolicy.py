@@ -66,7 +66,6 @@ class SupervisedPolicyAgent:
     self.h2_output = Model(input=[s_img],output = sup_network_h2)
     self.h3_output = Model(input=[s_img],output = sup_network_h3)
   
-    self.sup_policy.summary()
 
   def get_intermediate_layer_outputs(self,s):
     s = (np.asarray(s).copy()).astype('float32')
@@ -102,6 +101,8 @@ class SupervisedPolicyAgent:
   def load_train_results(self):
     self.sup_policy.load_weights('./policyWeights/sup/sup_weights.22-0.38204.hdf5')
     self.datagen = pickle.load( open( "./policyWeights/sup/datagen.p", "rb" ) )
+    mock_s = np.zeros((1,144,144,3))
+    self.predict_action(mock_s)
   
   def predict_action(self,s):
     '''

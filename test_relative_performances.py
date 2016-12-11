@@ -23,21 +23,31 @@ def create_players():
         action = np.random.choice(list(actions))
         return action
 
-    policy_player = PolicyPlayer('policy_only', policy_agent)
-    value_player = ValuePlayer('value_only', value_agent)
-    random_player = ComputerPlayer('random', random_algo)
-    uct_p05_player =  ComputerPlayer('UCT_p05s', mcts.uct, 0.05)
-    uct_p3_player =  ComputerPlayer('UCT_p3s', mcts.uct, 0.3)
-    uct_1s_player = ComputerPlayer('UCT_1s', mcts.uct, 1)
-    uct_3s_player = ComputerPlayer('UCT_3s', mcts.uct, 3)
-    fast_amcts_player = AMCTSPlayer('AMCTS_1s', 1, policy_agent=policy_agent, value_agent=value_agent)
-    amcts_player_policy_only = AMCTSPlayer('AMCTS_1s_policy_only', 1, policy_agent=policy_agent)
-    amcts_player_value_only = AMCTSPlayer('AMCTS_1s_value_only', 1, value_agent=value_agent)
-    slow_amcts_player = AMCTSPlayer('AMCTS_3s', 3, policy_agent=policy_agent, value_agent=value_agent)
+    p_only = PolicyPlayer('policy_only', policy_agent)
+    v_only = ValuePlayer('value_only', value_agent)
+    random = ComputerPlayer('random', random_algo)
 
-    return [policy_player, value_player, random_player, uct_1s_player, \
-        uct_p05_player, uct_p3_player, uct_1s_player, uct_3s_player, \
-        fast_amcts_player, amcts_player_value_only, amcts_player_policy_only, slow_amcts_player]
+    uct_p05 =  ComputerPlayer('UCT_p05s', mcts.uct, 0.05)
+    uct_p3 =  ComputerPlayer('UCT_p3s', mcts.uct, 0.3)
+    uct_p5 =  ComputerPlayer('UCT_p5s', mcts.uct, 0.5)
+    uct_1s = ComputerPlayer('UCT_1s', mcts.uct, 1)
+    uct_3s = ComputerPlayer('UCT_3s', mcts.uct, 3)
+
+    amcts_v_p05 = AMCTSPlayer('AMCTS_v_p05', 0.05, value_agent=value_agent)
+    amcts_v_p3 = AMCTSPlayer('AMCTS_v_p3s', 0.3, value_agent=value_agent)
+    amcts_v_p5 = AMCTSPlayer('AMCTS_v_p5s', .5, value_agent=value_agent)
+    amcts_v_1 = AMCTSPlayer('AMCTS_v_p1s', 1, value_agent=value_agent)
+    amcts_v_3 = AMCTSPlayer('AMCTS_v_p3s', 3, value_agent=value_agent)
+
+    amcts_p05 = AMCTSPlayer('AMCTS_p05s', 0.05, policy_agent=policy_agent, value_agent=value_agent)
+    amcts_p3 = AMCTSPlayer('AMCTS_p3s', 0.3, policy_agent=policy_agent, value_agent=value_agent)
+    amcts_p5 = AMCTSPlayer('AMCTS_p3s', 0.5, policy_agent=policy_agent, value_agent=value_agent)
+    amcts_1 = AMCTSPlayer('AMCTS_1s', 1, policy_agent=policy_agent, value_agent=value_agent)
+    amcts_3 = AMCTSPlayer('AMCTS_3s', 3, policy_agent=policy_agent, value_agent=value_agent)
+
+    return [p_only,v_only,random,\
+            uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
+            amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3]
 
 def compare_players(player1, player2, verbose=False, num_games = 5):
     """
@@ -95,11 +105,10 @@ def compare_players(player1, player2, verbose=False, num_games = 5):
 
 
 def main():
-    policy_player, value_player, random_player, uct_1s_player, \
-        uct_p05_player, uct_p3_player, uct_1s_player, uct_3s_player, \
-        fast_amcts_player, amcts_player_value_only, amcts_player_policy_only, slow_amcts_player = create_players()
-
-    win_pct_1, win_pct_2 = compare_players(uct_p05_player, policy_player, verbose=True, num_games=20)
+    p_only,v_only,random,\
+    uct_p05,uct_p3,uct_p5,uct_1,uct_3,\
+    amcts_p05,amcts_p3,amcts_p5,amcts_1,amcts_3 = create_players()
+    win_pct_1, win_pct_2 = compare_players(amcts_p5,uct_p5, verbose=True, num_games=20)
     print "first start: %.3f, second start: %.3f" %(win_pct_1, win_pct_2)
 
 
