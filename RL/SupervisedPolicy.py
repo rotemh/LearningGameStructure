@@ -144,5 +144,3 @@ class SupervisedPolicyAgent:
       return action_prob[0]
     else:
       return action_prob
-
-
