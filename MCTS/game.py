@@ -2,6 +2,7 @@ import math
 import copy
 import json
 import random
+import time
 
 from pprint import pprint
 
@@ -104,6 +105,8 @@ class ConnectFourBoard(Board):
     NUM_COLS = 7
     NUM_ROWS = 6
     NUM_TO_CONNECT = 4
+    RED_ID = 0
+    BLACK_ID=1
 
     #Image Visualization Parameters:
     SPACESIZE = 20 #size of the tokens and board spaces in pixels; make it 128 by 128
@@ -134,6 +137,7 @@ class ConnectFourBoard(Board):
 
         if state is None:
             self.state = [[ConnectFourBoard.EMPTY for j in xrange(ConnectFourBoard.NUM_ROWS)] for i in xrange(ConnectFourBoard.NUM_COLS)]
+            self.turn = ConnectFourBoard.RED
             if np.random.rand() > 0.5:
               self.turn = ConnectFourBoard.RED
             else:
@@ -463,10 +467,10 @@ class ComputerPlayer(Player):
         else:
             return self.algo(board)
 
-class RLPlayer(Player):
+class PolicyPlayer(Player):
   """
-  Reinforcement learning player that takes a
-  RLAgent obejct and provides an action by
+  Policy-based player that takes a
+  SupervisedPolicyAgent obejct and provides an action by
   predicting from the board image
   """
   def __init__(self,name,agent):
@@ -478,29 +482,40 @@ class RLPlayer(Player):
     legal_actions = board.get_legal_actions()
     
     if len(legal_actions) > 0:
-        if board.turn == board.RED:
-          column_prob_dist = self.agent.predict_action(board_img,np.asarray([0]))
-        else:
-          column_prob_dist = self.agent.predict_action(board_img,np.asarray([1]))
+        column_prob_dist = self.agent.predict_action(board_img)
         legal_column_prob_dist = [column_prob_dist[a.col] for a in legal_actions]
-        action_idx = np.argmax(legal_column_prob_dist) 
+        action_idx = np.argmax(legal_column_prob_dist)
         return legal_actions[action_idx]
     raise IllegalArgumentException("This should never have occurred, the game is already over")
 
-  def get_q_value(self, board):
+class ValuePlayer(Player):
+  """
+  Heuristic player that takes a SupervisedValueNetworkAgent
+  object, and provides an action by picking the
+  best action according to the future actions' estimated values
+  """
+  def __init__(self,name,agent):
+    Player.__init__(self,name)
+    self.agent = agent
+  
+  def choose_action(self, board):
     board_img = board.visualize_image()
-    if board.turn == ConnectFourBoard.RED:
-        player = 0
-    else:
-        player = 1
-    return self.agent.predict_Q_value(board_img, player)
+    legal_actions = board.get_legal_actions()
+
+    action_values = []
+    for action in legal_actions:
+        next_board_img = action.apply(board).visualize_image()
+        action_value = self.agent.predict_value(next_board_img)
+        action_values.append(action_value)
+    best_idx = np.argmax(action_values)
+    return legal_actions[best_idx]
   
 class Node(object):
     """
     A class that represents nodes in the MCTS tree.
     """
 
-    def __init__(self, board, action=None, parent=None):
+    def __init__(self, board, action=None, parent=None, heuristic=None):
         """
         Create new node.
 
@@ -515,7 +530,11 @@ class Node(object):
         self.parent = parent
         self.children = [] # children nodes
         self.num_visits = 0 # number of times node has been visited
-        self.q = 0.0 # simulation reward
+        if heuristic == None:
+            self.q = 0.0
+        else:
+            self.q = heuristic(board)
+        self.heuristic = heuristic
         
     def get_action(self):
         """
@@ -537,6 +556,13 @@ class Node(object):
         """
 
         return self.parent
+
+    def get_heuristic(self):
+        """
+        Return node's initial heuristic.
+        """
+
+        return self.heuristic
 
     def get_children(self):
         """
@@ -612,10 +638,10 @@ class Simulation(object):
     def __init__(self, board, *players):
         self.init_board = board
         self.board = board
-        self.players = players
+        self.players = players # players[0] is always red player?
         self.history = []
 
-    def run(self, visualize=False, json_visualize=False, state_action_history=False):
+    def run(self, visualize=False, json_visualize=False, state_action_history=False, testing=False):
         self.game_id = str(random.randint(0,3133337))
 
         tmp_history = [] #player id conscious        
@@ -627,42 +653,42 @@ class Simulation(object):
                 self.write_visualization_json()
 
             player_id = self.board.current_player_id()
-            player = self.players[player_id]
+            player = self.players[player_id] #players[0] is always red player?
+        #    stime = time.time()
             action = player.choose_action(self.board)
+        #    print 'Player '+ str(player_id) + ' took ' + str(time.time() - stime)
             self.board = player.play_action(action, self.board)
               
-            if state_action_history:
-                tmp_history.append((player_id, action))
-        winner = player
+            tmp_history.append((player_id, action))
+        winner = player_id # winner is the player that played last. NOTE: What if game ties?
 
-        if state_action_history: #only works for Connect 4 Board games
-            boardClass = self.board.__class__
-            replay_board = boardClass()
-            if self.players[tmp_history[0][0]] != winner: #winner must be the default start (Red)
-                switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
-                switchPlayerID = lambda x: 1 if x == 0 else 0
-                tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
-            
-            for (player_id, action) in tmp_history:
-                old_board = replay_board
-                replay_board = action.apply(old_board)
-                entry = {}
-                entry['reward'] = replay_board.reward_vector()
-                entry['player_id'] = player_id
-                entry['s_img'] = old_board.visualize_image()
-                entry['action'] = action.col
-                entry['sprime_img'] = replay_board.visualize_image()
-                entry['terminal_board'] = 0
-                entry['s'] = [[x for x in y] for y in old_board.state]
-                entry['sprime'] = [[x for x in y] for y in replay_board.state]
-                self.history.append(entry)
-            self.history[-1]['terminal_board'] = 1
+        boardClass = self.board.__class__
+        replay_board = boardClass()
+        #TODO: For value network, always predict the value of red player, but he does not always win.
+        if (ConnectFourBoard.RED_ID != winner) and (not testing): # winner must be RED
+            switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
+            switchPlayerID = lambda x: 1 if x == 0 else 0
+            tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]
+        
+        for (player_id, action) in tmp_history:
+            old_board = replay_board
+            replay_board = action.apply(old_board)
+            entry = {}
+            entry['reward'] = replay_board.reward_vector()
+            entry['player_id'] = player_id
+            entry['s_img'] = old_board.visualize_image()
+            entry['action'] = action.col
+            entry['sprime_img'] = replay_board.visualize_image()
+            entry['terminal_board'] = 0
+            entry['s'] = [[x for x in y] for y in old_board.state]
+            entry['sprime'] = [[x for x in y] for y in replay_board.state]
+            self.history.append(entry)
+        self.history[-1]['terminal_board'] = 1
 
         if json_visualize:
             self.write_visualization_json()
 
-        if state_action_history:
-            return self.history
+        return self.history
 
 
     def write_visualization_json(self):

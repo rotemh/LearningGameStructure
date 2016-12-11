@@ -52,7 +52,7 @@ def load_supervised_training_data( train_dir ):
           value.append(data[-1]['reward'][0])
         else:
           value.append(data[-1]['reward'][1])
-      if len(a) > 1000:
+      if len(a) > 22000:
         return np.asarray(s_data),np.asarray(a),\
           np.asarray(player_id),np.asarray(reward),np.asarray(value),\
           np.asarray(s_board_data),np.asarray(sprime_board_data)
@@ -64,12 +64,10 @@ def load_supervised_training_data( train_dir ):
     np.asarray(s_board_data),np.asarray(sprime_board_data)
 
 def main():
-  train_dataset_dir = '/home/aradhana/LearningGameStructure/dataset/'
+  train_dataset_dir = '/home/beomjoon/LearningGameStructure/dataset/'
   s_data,a,player_id,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
   rl_agent = SupervisedPolicyAgent((144,144,3),7)
   rl_agent.update_supervised_policy(s_data,a,player_id)
-  rl_player = game.RLPlayer('algo_1', rl_agent)
-  test_policy_vs_MCTS(rl_player)
 
 if __name__ == '__main__':
     main()
