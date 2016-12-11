@@ -54,7 +54,8 @@ def test_policy_vs_MCTS(player, mcts_times=None,verbose=False):
               print "For %.2f-second UCT, won %d, tied %d, lost %d" \
                         % (time_limit,wins,ties,losses)
           score.append(float(wins)/GAMES_PER_DIFFICULTY)
-          episodes.append(episode)
+          episodes.append(episode)  
+        import pdb;pdb.set_trace()
     return score,episodes
 
 def printBoardState(board):

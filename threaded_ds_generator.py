@@ -59,9 +59,9 @@ def main():
     print 'generating value network data'
     rl_agent = SupervisedPolicyAgent((144,144,3),7)
     rl_agent.load_train_results()  
-    rl_player = game.RLPlayer('algo_1', rl_agent)
+    rl_player = game.PolicyPlayer('algo_1', rl_agent)
     
-    for i in xrange(2200,num_of_episodes):
+    for i in xrange(4000,num_of_episodes):
       print 'generating episode = ' + str(i)
       generate_v_training_data(i,rl_player)
 

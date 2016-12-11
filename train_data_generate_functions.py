@@ -30,7 +30,7 @@ def generate_policy_training_data(episode_num, time_limit=1, file_path='./datase
                  'uct_time_limit':time_limit})
   return
 
-def generate_v_training_data(episode_num, rl_player,time_limit=1, file_path='./v_dataset/'):
+def generate_v_training_data(episode_num, rl_player,time_limit=0.05, file_path='./v_dataset/'):
   episode = generate_custom_vs_uct_game(rl_player,time_limit)
   
   # get each player's data
