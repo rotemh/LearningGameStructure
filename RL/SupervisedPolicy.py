@@ -116,9 +116,8 @@ class SupervisedPolicyAgent:
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
     action_prob = self.sup_policy.predict(s)
+    print action_prob
     if np.shape(s)[0] == 1:
       return action_prob[0]
     else:
       return action_prob
-
-
