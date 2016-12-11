@@ -24,7 +24,10 @@ def simulate_game(uct):
     return episode
 
 def generate_two_player_game(player1, player2):
-    board = game.ConnectFourBoard()
+    """
+    Plays two players against each other, where player1 moves first
+    """
+    board = game.ConnectFourBoard(turn=game.ConnectFourBoard.RED)
     sim = game.Simulation(board, player1, player2)
     result = sim.run(visualize=False,state_action_history=False, testing = True)
     return result

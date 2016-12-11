@@ -69,7 +69,8 @@ def create_players():
     amcts_1 = AMCTSPlayer('AMCTS_1s', 1, policy_agent=policy_agent, value_agent=value_agent)
     amcts_3 = AMCTSPlayer('AMCTS_3s', 3, policy_agent=policy_agent, value_agent=value_agent)
 
-    return [p_only,v_only,random,custom_center_player,\
+
+    return [p_only,v_only,random,custom_center_player, \
             uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
             amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3]
 
@@ -79,7 +80,7 @@ def compare_players(player1, player2, verbose=False, symmetric=True, num_games =
     The "1st start score" is the fraction of games won by player1 when player1 starts
     The "2nd start score" is the fraction of games won by player2 when player2 starts
 
-    If "symmetric" is enabled, only returns 1st start score
+    If "symmetric" is disabled, only returns 1st start score
     Otherwise, computes both and returns ("1st start score", "2nd start score")
 
     num_games - the number of games played through for each side
@@ -135,11 +136,14 @@ def compare_players(player1, player2, verbose=False, symmetric=True, num_games =
 
 
 def main():
-    p_only,v_only,random,custom_center_player,\
-    uct_p05,uct_p3,uct_p5,uct_1,uct_3,\
-    amcts_p05,amcts_p3,amcts_p5,amcts_1,amcts_3 = create_players()
-    win_pct_1, win_pct_2 = compare_players(amcts_p5,uct_p5, verbose=True, num_games=20)
-    print "first start: %.3f, second start: %.3f" %(win_pct_1, win_pct_2)
+    pp_only,v_only,random,custom_center_player, \
+            uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
+            amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3 = create_players()
+
+    player1 = amcts_v_1
+    player2 = uct_p3
+    win_pct_1, win_pct_2 = compare_players(player1, player2, verbose=True, num_games=10)
+    print "%s start: %.3f, %s start: %.3f" %(player1.name, win_pct_1, player2.name, win_pct_2)
 
 
 

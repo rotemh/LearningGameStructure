@@ -19,9 +19,11 @@ class AMCTSPlayer(ComputerPlayer):
   search tree.
   """
 
-  def __init__(self, name, time_limit, policy_agent = None, value_agent = None):
+  def __init__(self, name, time_limit, policy_agent = None, value_agent = None, rollout_randomness=0.3, value_prescaling=5.):
     self.policy_agent = policy_agent
     self.value_agent = value_agent
+    self.rollout_randomness = rollout_randomness # % of the time rollout step is random, vs. policy based
+    self.value_prescaling = value_prescaling # Multiplies the strength of the value-agent prediction
     ComputerPlayer.__init__(self, name, self.amcts_algo(), time_limit)
 
   def amcts_algo(self):
@@ -30,12 +32,12 @@ class AMCTSPlayer(ComputerPlayer):
         return 0
 
       board_image = board.visualize_image()
-      return self.value_agent.predict_value(board_image)
+      return self.value_prescaling*self.value_agent.predict_value(board_image)
   
     def default_heuristic(board):
       actions = board.get_legal_actions()
 
-      if self.policy_agent == None:      
+      if self.policy_agent == None or np.random.rand < np.rollout_randomness:      
         action = np.random.choice(list(actions))
         return action
 
