@@ -22,7 +22,7 @@ class SupervisedValueNetworkAgent:
     dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
     #id_input = Input( shape=(1,),name='player_id',dtype='float32')
-    kernel_size = 2
+    kernel_size = 4
 
     sup_network_h0 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
@@ -56,6 +56,16 @@ class SupervisedValueNetworkAgent:
                             optimizer='adadelta',
                             metrics =['accuracy']
                             )
+    self.h0_output = Model(input=[s_img],output = sup_network_h0)
+    self.h1_output = Model(input=[s_img],output = sup_network_h1)
+    self.h2_output = Model(input=[s_img],output = sup_network_h2)
+    self.h3_output = Model(input=[s_img],output = sup_network_h3)
+
+  def get_intermediate_layer_outputs(self,s):
+    s = (np.asarray(s).copy()).astype('float32')
+    s = self.datagen.standardize(s)
+    return self.h0_output.predict(s),self.h1_output.predict(s),\
+            self.h2_output.predict(s),self.h3_output.predict(s),\
 
   def update_v_network(self,state,v):
     state =state.astype('float32')

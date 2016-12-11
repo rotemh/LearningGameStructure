@@ -38,7 +38,7 @@ def load_supervised_training_data( train_dir ):
         else:
           assert(black[-1]['terminal_board'])
           value.append(black[-1]['reward'][0])
-      if len(a) > 22000:
+      if len(a) > 52000:
         return np.asarray(s_data),np.asarray(value)
     except ValueError:
       print f + ' is corrupted'

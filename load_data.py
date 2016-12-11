@@ -1,29 +1,20 @@
-from MCTS.sim import *
-from RL.SupervisedPolicy import *
-from MCTS.game import * 
+import os
+import pickle
 import numpy as np
 import scipy.io as sio
-import os
-from tester import test_policy_vs_MCTS
-import tensorflow as tf
-from keras import backend as K
-from load_data import yield_sup_policy_data
-import pickle
 
-#sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-#K.set_session(sess)
-
-def load_supervised_training_data( train_dir ):
+def yield_sup_policy_data( train_dir):
   train_files = os.listdir(train_dir)
   
   s_data = []
-  a = []
+  a_data = []
   sprime_data = []
   s_board_data = []
   sprime_board_data = []
   reward = []
   player_id = []
   value = []
+
   
   for f in train_files:
     if f[f.find('.'):] != '.p':
@@ -34,9 +25,10 @@ def load_supervised_training_data( train_dir ):
         if i==0:
           # skip the very first board position; too much variations
           continue 
-        player_id.append(data[i]['player_id'])
         s_data.append(data[i]['s_img'])
-        a.append(data[i]['action']) # col stored only
+        a_data.append(data[i]['action']) # col stored only
+        """
+        player_id.append(data[i]['player_id'])
         sprime_data.append(data[i]['sprime_img'])
         reward.append(data[i]['reward'])
         s_config = data[i]['s']
@@ -53,23 +45,24 @@ def load_supervised_training_data( train_dir ):
           value.append(data[-1]['reward'][0])
         else:
           value.append(data[-1]['reward'][1])
-      if len(a) > 200000:
-        print len(a)
-        return np.asarray(s_data),np.asarray(a),\
+      """
+      if len(a_data) >= 5000:
+        yield np.asarray(s_data),np.asarray(a_data)
+        s_data=[]
+        a_data=[]
+        """
+        yield np.asarray(s_data),np.asarray(a),\
           np.asarray(player_id),np.asarray(reward),np.asarray(value),\
           np.asarray(s_board_data),np.asarray(sprime_board_data)
+        s_data = []
+        a = []
+        sprime_data = []
+        s_board_data = []
+        sprime_board_data = []
+        reward = []
+        player_id = []
+        value = []
+        print len(a)
+        """
     except ValueError:
       print f + ' is corrupted'
- 
-  return np.asarray(s_data),np.asarray(a),\
-    np.asarray(player_id),np.asarray(reward),np.asarray(value),\
-    np.asarray(s_board_data),np.asarray(sprime_board_data)
-
-def main():
-  train_dataset_dir = '/home/beomjoon/LearningGameStructure/dataset/'
-  #s_data,a,player_id,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
-  rl_agent = SupervisedPolicyAgent((144,144,3),7)
-  rl_agent.update_supervised_policy(yield_sup_policy_data)
-
-if __name__ == '__main__':
-    main()

@@ -25,7 +25,7 @@ def uct(board, time_limit):
         reward_vector = default_policy(tree_terminal.get_board())
         backup(tree_terminal, reward_vector)
 
-    print "UCT ran with %d visits"%root.get_num_visits()
+#    print "UCT ran with %d visits"%root.get_num_visits()
 
     return best_child(root, 0).get_action() # where is this tree node coming from?
 
@@ -61,7 +61,7 @@ def uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic):
     # record start time
     start_time = time.time()
     root = Node(board, None, None, uct_heuristic)
-    c = 1
+    c = 1 # exploration constant
     
     while time.time() - start_time < time_limit:
         tree_terminal = tree_policy(root, c)

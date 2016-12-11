@@ -12,7 +12,7 @@ import MCTS.mcts as mcts
 def main():
   rl_agent = SupervisedPolicyAgent((144,144,3),7)
   rl_agent.load_train_results()  
-  rl_player = game.ValueNetworkPlayer('algo_1', rl_agent)
+  rl_player = game.PolicyPlayer('algo_1', rl_agent)
   score,episode = test_policy_vs_MCTS(rl_player,verbose=True)
   
 
