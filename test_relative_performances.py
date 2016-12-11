@@ -7,6 +7,7 @@ from amcts import *
 import numpy as np
 import scipy.io as sio
 from tester import test_policy_vs_MCTS
+import csv
 
 MAX_GAME_MOVES = 42
 
@@ -117,7 +118,7 @@ def compare_players(player1, player2, verbose=False, symmetric=True, num_games =
             pass
 
     if not symmetric:
-        return first_start_score
+        return first_start_score/float(num_games)
 
     second_start_score = 0
     for game in xrange(num_games):
@@ -136,9 +137,25 @@ def compare_players(player1, player2, verbose=False, symmetric=True, num_games =
 
 
 def main():
+    players = create_players()
     pp_only,v_only,random,custom_center_player, \
             uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
-            amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3 = create_players()
+            amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3 = players
+
+    # weights_file = open("./comparisons/players_simple.txt", "a+")
+
+    # if weights_file.readline() == "":
+    #     HEADER_LINE = "FIRST_PLAYER, "
+    #     for player in players:
+    #         HEADER_LINE += player.name + ", "
+    #     weights_file.write(HEADER_LINE+"\n")
+
+    # for player1 in players:
+    #     data_line = player1.name + ": "
+    #     for player2 in players:
+    #         p1_win_rate = compare_players(player1, player2, num_games=2, symmetric=False)
+    #         data_line += ("%.3f, "%p1_win_rate)
+    #     weights_file.write(data_line + "\n")
 
     player1 = amcts_v_1
     player2 = uct_p3

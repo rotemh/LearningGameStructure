@@ -1,0 +1,6 @@
+FIRST_PLAYER, policy_only, value_only, random, custom_center, UCT_p05s, UCT_p3s, UCT_p5s, UCT_1s, UCT_3s, AMCTS_v_p05, AMCTS_v_p3s, AMCTS_v_p5s, AMCTS_v_p1s, AMCTS_v_p3s, 
+FIRST_PLAYER, policy_only, value_only, random, custom_center, UCT_p05s, UCT_p3s, UCT_p5s, UCT_1s, UCT_3s, AMCTS_v_p05, AMCTS_v_p3s, AMCTS_v_p5s, AMCTS_v_p1s, AMCTS_v_p3s, 
+policy_only: 0.000, 2.000, 2.000, 1.000, 2.000, 1.000, 0.000, 0.000, 0.000, 2.000, 0.000, 0.000, 1.000, 1.000, 
+value_only: 0.000, 1.000, 2.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 2.000, 1.000, 1.000, 0.000, 
+random: 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 
+custom_center: 0.000, 2.000, 2.000, 1.000, 2.000, 0.000, 0.000, 0.000, 0.000, 2.000, 1.000, 0.000, 0.000, 1.000, 
