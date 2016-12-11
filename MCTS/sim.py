@@ -23,6 +23,12 @@ def simulate_game(uct):
     #return sim.board.current_player_id() # why would we need an id?
     return episode
 
+def generate_two_player_game(player1, player2):
+    board = game.ConnectFourBoard()
+    sim = game.Simulation(board, player1, player2)
+    result = sim.run(visualize=False,state_action_history=False, testing = True)
+    return result
+
 def generate_custom_vs_uct_game(player1,uct_time_limit=1.0):
     """
     Run a custom player versus a uct MCTS player
