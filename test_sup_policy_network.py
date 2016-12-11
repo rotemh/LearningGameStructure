@@ -14,7 +14,7 @@ def main():
   rl_agent.load_train_results()  
   rl_player = game.PolicyPlayer('algo_1', rl_agent)
   print("Player Ready")
-  # score,episode = test_policy_vs_MCTS(rl_player,verbose=True)
+  #score,episode = test_policy_vs_MCTS(rl_player,verbose=True)
   test_policy_scenarios(rl_player, True)
 
 
