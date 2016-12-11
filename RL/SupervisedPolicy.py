@@ -122,8 +122,11 @@ class SupervisedPolicyAgent:
 
   def load_train_results(self):
     self.sup_policy.load_weights('./policyWeights/sup/sup_weights.22-0.38204.hdf5')
-#    self.datagen = pickle.load( open( "./policyWeights/sup/datagen_0.38.p", "rb" ) )
     self.datagen = pickle.load( open( './datagen_0.38.p', "rb" ) )
+    """
+    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.e.0.counter.21.hdf5')
+    self.datagen = pickle.load( open( './policyWeights/sup/datagen.p', "rb" ) )
+    """
     mock_s = np.zeros((1,144,144,3))
     self.predict_action(mock_s)
   
