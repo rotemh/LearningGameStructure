@@ -478,7 +478,7 @@ class PolicyPlayer(Player):
     self.agent = agent
   
   def choose_action(self,board):
-    board_img = board.visualize_image()
+    board_img = board.visualize_image(makeCurrPlayerRed=True)
     legal_actions = board.get_legal_actions()
     
     if len(legal_actions) > 0:
@@ -499,12 +499,12 @@ class ValuePlayer(Player):
     self.agent = agent
   
   def choose_action(self, board):
-    board_img = board.visualize_image()
+    board_img = board.visualize_image(makeCurrPlayerRed=True)
     legal_actions = board.get_legal_actions()
 
     action_values = []
     for action in legal_actions:
-        next_board_img = action.apply(board).visualize_image()
+        next_board_img = action.apply(board).visualize_image(makeCurrPlayerRed=True)
         action_value = self.agent.predict_value(next_board_img)
         action_values.append(action_value)
     best_idx = np.argmax(action_values)

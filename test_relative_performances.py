@@ -69,7 +69,7 @@ def create_players():
     amcts_1 = AMCTSPlayer('AMCTS_1s', 1, policy_agent=policy_agent, value_agent=value_agent)
     amcts_3 = AMCTSPlayer('AMCTS_3s', 3, policy_agent=policy_agent, value_agent=value_agent)
 
-    return [p_only,v_only,random,custom_center_player\
+    return [p_only,v_only,random,custom_center_player,\
             uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
             amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3]
 
@@ -135,7 +135,7 @@ def compare_players(player1, player2, verbose=False, symmetric=True, num_games =
 
 
 def main():
-    p_only,v_only,random,custom_center_player\
+    p_only,v_only,random,custom_center_player,\
     uct_p05,uct_p3,uct_p5,uct_1,uct_3,\
     amcts_p05,amcts_p3,amcts_p5,amcts_1,amcts_3 = create_players()
     win_pct_1, win_pct_2 = compare_players(amcts_p5,uct_p5, verbose=True, num_games=20)
