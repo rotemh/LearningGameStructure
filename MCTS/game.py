@@ -254,21 +254,28 @@ class ConnectFourBoard(Board):
         print '  ' + ' '.join([str(col) for col in xrange(ConnectFourBoard.NUM_COLS)])
         print(self.visualize_image('test', True)[0][0])
 
-    def visualize_image(self, imgName='NULL', saveImgFile=False):
+    def visualize_image(self, makeCurrPlayerRed = False, imgName='NULL', saveImgFile=False):
         '''
         uses pillow to visualize image and returns a 3d np array.
         '''
         img = Image.new('RGB', (ConnectFourBoard.WINDOWWIDTH, ConnectFourBoard.WINDOWHEIGHT), color=ConnectFourBoard.BGCOLOR)
         getSpaceRectCoords = lambda x, y: (ConnectFourBoard.XMARGIN + (x * ConnectFourBoard.SPACESIZEX), 
             (y * ConnectFourBoard.SPACESIZEY) - ConnectFourBoard.YMARGIN )
-            
+        
+	ri = ConnectFourBoard.RED_IMG
+	bi = ConnectFourBoard.BLACK_IMG
+
+	if makeCurrPlayerRed and self.turn != ConnectFourBoard.RED: #flip images
+		ri  = ConnectFourBoard.BLACK_IMG
+		bi = ConnectFourBoard.RED_IMG
+
         for x in xrange(ConnectFourBoard.NUM_COLS):
             for y in reversed(xrange(ConnectFourBoard.NUM_ROWS)):
                 top_left = getSpaceRectCoords(x, ConnectFourBoard.NUM_ROWS - y)
                 if self.state[x][y] == ConnectFourBoard.RED:
-                    img.paste(ConnectFourBoard.RED_IMG, top_left)
+                    img.paste(ri, top_left)
                 elif self.state[x][y] == ConnectFourBoard.BLACK:
-                    img.paste(ConnectFourBoard.BLACK_IMG, top_left)
+                    img.paste(bi, top_left)
                 img.paste(ConnectFourBoard.BOARD_IMG, top_left, ConnectFourBoard.BOARD_IMG)
         
         board_img = np.transpose(np.asarray(img, dtype=np.uint8), (1,0,2))
