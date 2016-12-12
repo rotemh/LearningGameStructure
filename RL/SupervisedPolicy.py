@@ -25,26 +25,31 @@ class SupervisedPolicyAgent:
     conv_init = 'lecun_uniform'
     dense_init = 'he_uniform'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
-    kernel_size = 4
+    kernel_size = 5
+    active_fn='relu'
 
     sup_network_h0 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
-                                   border_mode='same', init=conv_init)(s_img)
+                                   activation=active_fn,
+                                   border_mode='valid', init=conv_init)(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
     sup_network_h1 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
+                                   activation=active_fn,
                                    border_mode='same',init=dense_init)(sup_network_h0)
     sup_network_h1 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
     sup_network_h2 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
+                                   activation=active_fn,
                                    border_mode='same',init=dense_init)(sup_network_h1)
     sup_network_h2 = MaxPooling2D(pool_size=(2,2))(sup_network_h2)
     sup_network_h3 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
+                                   activation=active_fn,
                                    border_mode='same',init=dense_init)(sup_network_h2)
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
 
@@ -135,12 +140,12 @@ class SupervisedPolicyAgent:
                           batch_size = 256,
                           validation_split = 0.1)
   def load_train_results(self):
-    """
-    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.22-0.38204.hdf5')
-    self.datagen = pickle.load( open( './datagen_0.38.p', "rb" ) )
+    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.18-0.43751.hdf5')
+    self.datagen = pickle.load( open( './policyWeights/sup/datagen.p', "rb" ) )
     """
     self.sup_policy.load_weights('./policyWeights/sup/50000_4_kernel/sup_weights.28-0.42551.hdf5')
     self.datagen = pickle.load( open( './policyWeights/sup/50000_4_kernel/datagen.p', "rb" ) )
+    """
     mock_s = np.zeros((1,144,144,3))
     self.predict_action(mock_s)
   

@@ -106,7 +106,7 @@ def expand(node):
             break
     
     new_board = action.apply(board)
-    child = Node(new_board, action, node, node.get_heuristic())
+    child = Node(new_board, action, node, node.get_heuristic(), node.v_network_weight)
     node.add_child(child)
     return child
 

@@ -53,15 +53,19 @@ def load_supervised_training_data( train_dir ):
           value.append(black[-1]['reward'][0])
         s_data.append(data[i]['s_img'])
       if len(s_data) > 50000:
+        print black_won, red_won
         return np.asarray(s_data),np.asarray(value)
     except:
       print f + ' is corrupted'
-  import pdb;pdb.set_trace()
+  print black_won, red_won
   return np.asarray(s_data),np.asarray(value)
 
 def main():
-  train_dataset_dir = '/home/beomjoon/LearningGameStructure/mcts_v_dataset/'
-  s_data,value = load_supervised_training_data(train_dataset_dir)
+#  train_dataset_dir = '/home/beomjoon/LearningGameStructure/mcts_v_dataset/'
+#  s_data,value = load_supervised_training_data(train_dataset_dir)
+  s_data = pickle.load(open('v_dataset_s.p'))
+  value = pickle.load(open('v_dataset_v.p'))
+  import pdb;pdb.set_trace()
   rl_agent = SupervisedValueNetworkAgent((144,144,3))
   rl_agent.update_v_network(s_data,value)
   import pdb;pdb.set_trace()

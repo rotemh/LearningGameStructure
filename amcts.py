@@ -31,7 +31,7 @@ class AMCTSPlayer(ComputerPlayer):
       if self.value_agent == None:
         return 0
 
-      board_image = board.visualize_image()
+      board_image = board.visualize_image(makeCurrPlayerRed=True)
       return self.value_agent.predict_value(board_image)
   
     def default_heuristic(board):
@@ -41,7 +41,7 @@ class AMCTSPlayer(ComputerPlayer):
         action = np.random.choice(list(actions))
         return action
 
-      board_image = board.visualize_image()
+      board_image = board.visualize_image(makeCurrPlayerRed=True)
       column_prob_dist = self.policy_agent.predict_action(board_image)
       legal_column_prob_dist = [column_prob_dist[action.col] for action in actions]
       action_idx = np.argmax(legal_column_prob_dist)

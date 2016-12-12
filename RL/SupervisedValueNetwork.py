@@ -21,34 +21,46 @@ class SupervisedValueNetworkAgent:
     conv_init = 'lecun_uniform'
     dense_init = 'glorot_uniform'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
-    #id_input = Input( shape=(1,),name='player_id',dtype='float32')
-    kernel_size = 4
-
+    active_fn = 'relu'
+    kernel_size = 5
+  
     sup_network_h0 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
-                                   nb_col=kernel_size, 
-                                   border_mode='same', init=conv_init)(s_img)
+                                   nb_col=kernel_size,
+                                   activation = active_fn,
+                                   border_mode='valid', init=conv_init)(s_img)
     sup_network_h0 = MaxPooling2D(pool_size=(2,2))(sup_network_h0)
     sup_network_h1 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
+                                   activation = active_fn,
                                    border_mode='same',init=dense_init)(sup_network_h0)
     sup_network_h1 = MaxPooling2D(pool_size=(2,2))(sup_network_h1)
     sup_network_h2 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
+                                   activation = active_fn,
                                    border_mode='same',init=dense_init)(sup_network_h1)
     sup_network_h2 = MaxPooling2D(pool_size=(2,2))(sup_network_h2)
     sup_network_h3 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
                                    nb_col=kernel_size, 
+                                   activation = active_fn,
                                    border_mode='same',init=dense_init)(sup_network_h2)
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
+    sup_network_h4 = Convolution2D(nb_filter = 32,
+                                   nb_row=kernel_size,
+                                   nb_col=kernel_size, 
+                                   activation = active_fn,
+                                   border_mode='same',init=dense_init)(sup_network_h3)
+    sup_network_h4 = MaxPooling2D(pool_size=(2,2))(sup_network_h4)
     sup_network_h2 = Flatten()(sup_network_h3)
 
     sup_network_merge = sup_network_h2 
-    sup_network_v = Dense(1,activation='tanh',
+    sup_network_v = Dense(32,activation='linear',
                             init=dense_init)(sup_network_merge)
+    sup_network_v = Dense(1,activation='tanh',
+                            init=dense_init)(sup_network_v)
     V = sup_network_v
     self.sup_v_network = Model(input =s_img,output=V)
     self.sup_v_network.compile(loss='mse',
@@ -76,13 +88,13 @@ class SupervisedValueNetworkAgent:
     pickle.dump( self.datagen,open('./valueNetworkWeights/sup/datagen.p','wb') )
 
     state = np.asarray(state)
-    early = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='auto')
+    early = EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto')
     state = self.datagen.standardize(state)
     checkpoint = ModelCheckpoint(filepath=\
              './valueNetworkWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
               monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
     loss_graph = LossGrapher()
-    self.sup_v_network.fit(state,v,nb_epoch=20,
+    self.sup_v_network.fit(state,v,nb_epoch=200,
                         callbacks=[early,checkpoint,loss_graph],
                         batch_size = 32,
                         validation_split = 0.1)
@@ -93,7 +105,7 @@ class SupervisedValueNetworkAgent:
     self.datagen = pickle.load( open( "./valueNetworkWeights/sup/old_good/datagen.p" ) )
     """
     self.sup_v_network.load_weights(\
-          './valueNetworkWeights/sup/sup_weights.13-0.52265.hdf5')
+          './valueNetworkWeights/sup/sup_weights.37-0.43802.hdf5')
     self.datagen = pickle.load( open( "./valueNetworkWeights/sup/datagen.p" ) )
     mock_s = np.zeros((1,144,144,3))
     self.predict_value(mock_s)

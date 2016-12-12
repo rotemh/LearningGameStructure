@@ -508,6 +508,9 @@ class ValuePlayer(Player):
         action_value = self.agent.predict_value(next_board_img)
         action_values.append(action_value)
     best_idx = np.argmax(action_values)
+    #for s in board.state:
+    #  print s
+    #print best_idx,legal_actions[best_idx].col
     return legal_actions[best_idx]
   
 class Node(object):
@@ -629,7 +632,9 @@ class Node(object):
         exploitation_value = self.q / self.num_visits
         exploration_value = c * math.sqrt(2 * math.log(self.parent.num_visits) / self.num_visits)
         
-        return self.v_network_weight * self.v + (1-self.v_network_weight)*(exploitation_value + exploration_value)
+        rho = self.v_network_weight ** self.num_visits
+        #print rho,self.v
+        return rho * self.v + (1-rho)*(exploitation_value + exploration_value)
 
 
 class Simulation(object):

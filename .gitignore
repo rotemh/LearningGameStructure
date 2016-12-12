@@ -8,4 +8,5 @@ dataset/*.p
 dataset/*.mat
 mcts_v_dataset/*.p
 mcts_v_dataset/*.mat
+/*.p
 

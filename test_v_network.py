@@ -22,11 +22,11 @@ def main():
   """
   rl_agent = SupervisedValueNetworkAgent((144,144,3))
   rl_agent.load_train_results()  
-  pol = SupervisedPolicyAgent((144,144,3),7)
-  pol.load_train_results()  
-#  rl_player =game.ValuePlayer('value_only', rl_agent)
+  #pol = SupervisedPolicyAgent((144,144,3),7)
+  #pol.load_train_results()  
 
-  amcts_v_1 = AMCTSPlayer('AMCTS_v_p1s', 0.1, value_agent=rl_agent,v_network_weight=0.5)
+  amcts_v_1 = AMCTSPlayer('AMCTS_v_p1s', 0.2, value_agent=rl_agent,v_network_weight=0.1)
+  v_only = ValuePlayer('value_only', rl_agent)
   score,episode = test_policy_vs_MCTS(amcts_v_1,verbose=True)
 
 if __name__ == '__main__':
