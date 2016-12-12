@@ -85,10 +85,14 @@ class SupervisedValueNetworkAgent:
     self.sup_v_network.fit(state,v,nb_epoch=10000,
                         callbacks=[early,checkpoint,loss_graph],
                         batch_size = 32,
-                        validation_split = 0.25)
+                        validation_split = 0.1)
 
   def load_train_results(self):
-    self.sup_v_network.load_weights('./valueNetworkWeights/sup/sup_weights.04-0.92093.hdf5')
+    """
+    self.sup_v_network.load_weights('./valueNetworkWeights/sup/old_good/sup_weights.04-0.92093.hdf5')
+    self.datagen = pickle.load( open( "./valueNetworkWeights/sup/old_good/datagen.p" ) )
+    """
+    self.sup_v_network.load_weights('./valueNetworkWeights/sup/sup_weights.17-0.91537.hdf5')
     self.datagen = pickle.load( open( "./valueNetworkWeights/sup/datagen.p" ) )
     mock_s = np.zeros((1,144,144,3))
     self.predict_value(mock_s)
@@ -99,6 +103,8 @@ class SupervisedValueNetworkAgent:
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
 
-    return self.sup_v_network.predict(s)
+    v= self.sup_v_network.predict(s)
+    print v
+    return v
     
   

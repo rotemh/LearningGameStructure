@@ -20,6 +20,8 @@ def load_supervised_training_data( train_dir ):
   player_id = []
   value = []
   
+  black_won = 0
+  red_won = 0
   for f in train_files:
     if f[f.find('.'):] != '.p':
       continue
@@ -31,14 +33,25 @@ def load_supervised_training_data( train_dir ):
         if i==0:
           # skip the very first board position; too much variations
           continue 
-        s_data.append(data[i]['s_img'])
         if data[-1]['terminal_board']:
           # value = end reward
+          if red_won - black_won > 10:
+            continue
+          print 'red won'
+          print data[-1]['reward']
+          red_won += 1
           value.append(data[-1]['reward'][0])
+        
         else:
           assert(black[-1]['terminal_board'])
+          if black_won - red_won > 10:
+            continue
+          print 'black won'
+          print black[-1]['reward']
+          black_won+=1
           value.append(black[-1]['reward'][0])
-      if len(a) > 52000:
+        s_data.append(data[i]['s_img'])
+      if len(s_data) > 50000:
         return np.asarray(s_data),np.asarray(value)
     except ValueError:
       print f + ' is corrupted'

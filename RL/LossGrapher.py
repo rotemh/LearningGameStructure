@@ -19,6 +19,7 @@ class LossGrapher(Callback):
     self.val_loss = []
 
   def on_epoch_end(self,epoch,logs={}):
+    return
     self.loss.append(logs.get('loss'))
     self.val_loss.append(logs.get('val_loss'))
     self.acc.append(logs.get('acc'))
@@ -27,6 +28,7 @@ class LossGrapher(Callback):
       self.plot_history(epoch)
   
   def plot_history(self,epoch):
+    return 
     # summarize history for accuracy    
     fig = plt.figure()
     plt.plot(self.acc)

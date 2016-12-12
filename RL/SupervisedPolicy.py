@@ -24,7 +24,7 @@ class SupervisedPolicyAgent:
     conv_init = 'lecun_uniform'
     dense_init = 'glorot_normal'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
-    kernel_size = 2
+    kernel_size = 4
 
     sup_network_h0 = Convolution2D(nb_filter = 32,
                                    nb_row=kernel_size,
@@ -46,13 +46,14 @@ class SupervisedPolicyAgent:
                                    nb_col=kernel_size, 
                                    border_mode='same',init=dense_init)(sup_network_h2)
     sup_network_h3 = MaxPooling2D(pool_size=(2,2))(sup_network_h3)
+
     sup_network_h2 = Flatten()(sup_network_h3)
     sup_network_merge = sup_network_h2 #merge([sup_network_h2,id_input],mode='concat')
     
-    sup_network_batch_normed = BatchNormalization()(sup_network_merge)
+#    sup_network_batch_normed = BatchNormalization()(sup_network_merge)
     #TODO: does this make it so that the data is centered? what does batchnormalization actually do?
     sup_network_a = Dense(self.num_actions,activation='softmax',
-                            init=dense_init)(sup_network_batch_normed)
+                            init=dense_init)(sup_network_merge)
     V = sup_network_a
     self.sup_policy = Model(input =s_img,output=V)
     self.sup_policy.compile(loss='categorical_crossentropy',
@@ -65,6 +66,7 @@ class SupervisedPolicyAgent:
     self.h1_output = Model(input=[s_img],output = sup_network_h1)
     self.h2_output = Model(input=[s_img],output = sup_network_h2)
     self.h3_output = Model(input=[s_img],output = sup_network_h3)
+    self.sup_policy.summary()
   
 
   def get_intermediate_layer_outputs(self,s):
@@ -81,19 +83,8 @@ class SupervisedPolicyAgent:
     a = a.astype('float32')
     action = np_utils.to_categorical(a, self.num_actions).astype('int32')
     return state,action
+  """
   def update_supervised_policy(self,yield_sup_policy_data):
-    """
-    state =state.astype('float32')
-    a = a.astype('float32')
-    self.datagen = ImageDataGenerator(
-      featurewise_center=True,
-      featurewise_std_normalization=True)
-    self.datagen.fit(state)
-    pickle.dump( self.datagen,open('./policyWeights/sup/datagen.p','wb') )
-    action = np_utils.to_categorical(a, self.num_actions).astype('int32')
-    state = np.asarray(state)
-    state = self.datagen.standardize(state)
-    """
     self.datagen = pickle.load( open( "./policyWeights/sup/datagen.p", "rb" ) )
     early = EarlyStopping(monitor='val_loss', patience=20000, verbose=0, mode='auto')
     checkpoint = ModelCheckpoint(filepath=\
@@ -119,14 +110,35 @@ class SupervisedPolicyAgent:
           weight_f = './policyWeights/sup/sup_weights.{epoch:'+ str(e) + '}-{val_acc:' + str(val_acc) +'}.hdf5'
           self.sup_policy.save(weight_f)
       print 'epoch = ' + str(e) + ' '
+  """
+  def update_supervised_policy(self,state,a):
+    state =state.astype('float32')
+    a = a.astype('float32')
+    self.datagen = ImageDataGenerator(
+      featurewise_center=True,
+      featurewise_std_normalization=True)
+    self.datagen.fit(state)
+    pickle.dump( self.datagen,open('./policyWeights/sup/datagen.p','wb') )
 
+    action = np_utils.to_categorical(a, self.num_actions).astype('int32')
+    state = np.asarray(state)
+    early = EarlyStopping(monitor='val_loss', patience=20000, verbose=0, mode='auto')
+    state = self.datagen.standardize(state)
+    checkpoint = ModelCheckpoint(filepath=\
+                                './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
+                                  monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
+    loss_graph = LossGrapher()
+    history = self.sup_policy.fit([state],action,nb_epoch=10000,
+                          callbacks=[early,checkpoint,loss_graph],
+                          batch_size = 32,
+                          validation_split = 0.1)
   def load_train_results(self):
+    """
     self.sup_policy.load_weights('./policyWeights/sup/sup_weights.22-0.38204.hdf5')
     self.datagen = pickle.load( open( './datagen_0.38.p', "rb" ) )
     """
-    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.e.0.counter.21.hdf5')
+    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.28-0.42551.hdf5')
     self.datagen = pickle.load( open( './policyWeights/sup/datagen.p', "rb" ) )
-    """
     mock_s = np.zeros((1,144,144,3))
     self.predict_action(mock_s)
   
