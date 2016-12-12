@@ -10,7 +10,9 @@ from tester import test_policy_vs_MCTS
 import csv
 
 MAX_GAME_MOVES = 42
+import tensorflow as tf
 
+tf.python.control_flow_ops = tf
 def create_players():
     """
     Construct the set of player types we'd like to test our algorithm against.
@@ -53,10 +55,10 @@ def create_players():
     custom_center_player = ComputerPlayer('custom_center', custom_algo)
 
     uct_p05 =  ComputerPlayer('UCT_p05s', mcts.uct, 0.05)
-    uct_p3 =  ComputerPlayer('UCT_p3s', mcts.uct, 0.3)
+    uct_p2 =  ComputerPlayer('UCT_p2s', mcts.uct, 0.2)
     uct_p5 =  ComputerPlayer('UCT_p5s', mcts.uct, 0.5)
     uct_1s = ComputerPlayer('UCT_1s', mcts.uct, 1)
-    uct_3s = ComputerPlayer('UCT_3s', mcts.uct, 3)
+    uct_2s = ComputerPlayer('UCT_2s', mcts.uct, 2)
 
     amcts_v_p05 = AMCTSPlayer('AMCTS_v_p05', 0.05, value_agent=value_agent)
     amcts_v_p3 = AMCTSPlayer('AMCTS_v_p3s', 0.3, value_agent=value_agent)
@@ -72,10 +74,10 @@ def create_players():
 
 
     return [p_only,v_only,random,custom_center_player, \
-            uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
+            uct_p05,uct_p2,uct_p5,uct_1s,uct_2s,\
             amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3]
 
-def compare_players(player1, player2, verbose=False, symmetric=True, num_games = 5):
+def compare_players(player1, player2, verbose=False, symmetric=False, num_games = 5):
     """
     Takes in two MCTS/game.py Player instance, and compares them with each other
     The "1st start score" is the fraction of games won by player1 when player1 starts
@@ -139,29 +141,26 @@ def compare_players(player1, player2, verbose=False, symmetric=True, num_games =
 def main():
     players = create_players()
     pp_only,v_only,random,custom_center_player, \
-            uct_p05,uct_p3,uct_p5,uct_1s,uct_3s,\
+            uct_p05,uct_p2,uct_p5,uct_1s,uct_2s,\
             amcts_v_p05,amcts_v_p3,amcts_v_p5,amcts_v_1,amcts_v_3 = players
+    
+    #players = [random, custom_center_player, uct_p05,uct_p2,uct_p5,uct_1s,uct_2s]
+    black_list = [random, custom_center_player, uct_p05,uct_p2,uct_p5,uct_1s,uct_2s]
+    weights_file = open("./comparisons/players_simple.txt", "a+")
 
-    # weights_file = open("./comparisons/players_simple.txt", "a+")
+    if weights_file.readline() == "":
+        HEADER_LINE = "FIRST_PLAYER, "
+        for player in players:
+            HEADER_LINE += player.name + ", "
+            weights_file.write(HEADER_LINE+"\n")
 
-    # if weights_file.readline() == "":
-    #     HEADER_LINE = "FIRST_PLAYER, "
-    #     for player in players:
-    #         HEADER_LINE += player.name + ", "
-    #     weights_file.write(HEADER_LINE+"\n")
-
-    # for player1 in players:
-    #     data_line = player1.name + ": "
-    #     for player2 in players:
-    #         p1_win_rate = compare_players(player1, player2, num_games=2, symmetric=False)
-    #         data_line += ("%.3f, "%p1_win_rate)
-    #     weights_file.write(data_line + "\n")
-
-    player1 = amcts_v_1
-    player2 = uct_p3
-    win_pct_1, win_pct_2 = compare_players(player1, player2, verbose=True, num_games=10)
-    print "%s start: %.3f, %s start: %.3f" %(player1.name, win_pct_1, player2.name, win_pct_2)
-
+    for player1 in players:
+        data_line = player1.name + ": "
+        for player2 in players:
+            if not (player1 in black_list and player2 in black_list):
+                p1_win_rate = compare_players(player1, player2, num_games=20, symmetric=False)
+                data_line += ("%.3f, "%p1_win_rate)
+        weights_file.write(data_line + "\n")
 
 
 if __name__ == "__main__":
