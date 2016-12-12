@@ -19,7 +19,7 @@ class SupervisedValueNetworkAgent:
 
   def create_supervised_v_network_model(self):
     conv_init = 'lecun_uniform'
-    dense_init = 'glorot_normal'
+    dense_init = 'glorot_uniform'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
     #id_input = Input( shape=(1,),name='player_id',dtype='float32')
     kernel_size = 4
@@ -47,8 +47,7 @@ class SupervisedValueNetworkAgent:
     sup_network_h2 = Flatten()(sup_network_h3)
 
     sup_network_merge = sup_network_h2 
-    sup_network_batch_normed = BatchNormalization()(sup_network_merge)
-    sup_network_v = Dense(1,activation='linear',
+    sup_network_v = Dense(1,activation='tanh',
                             init=dense_init)(sup_network_merge)
     V = sup_network_v
     self.sup_v_network = Model(input =s_img,output=V)
@@ -60,6 +59,7 @@ class SupervisedValueNetworkAgent:
     self.h1_output = Model(input=[s_img],output = sup_network_h1)
     self.h2_output = Model(input=[s_img],output = sup_network_h2)
     self.h3_output = Model(input=[s_img],output = sup_network_h3)
+    self.sup_v_network.summary()
 
   def get_intermediate_layer_outputs(self,s):
     s = (np.asarray(s).copy()).astype('float32')
@@ -76,13 +76,13 @@ class SupervisedValueNetworkAgent:
     pickle.dump( self.datagen,open('./valueNetworkWeights/sup/datagen.p','wb') )
 
     state = np.asarray(state)
-    early = EarlyStopping(monitor='val_loss', patience=20000, verbose=0, mode='auto')
+    early = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='auto')
     state = self.datagen.standardize(state)
     checkpoint = ModelCheckpoint(filepath=\
-                          './valueNetworkWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
-                          monitor='val_loss', verbose=0, save_best_only=True, mode='auto')
+             './valueNetworkWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
+              monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
     loss_graph = LossGrapher()
-    self.sup_v_network.fit(state,v,nb_epoch=10000,
+    self.sup_v_network.fit(state,v,nb_epoch=20,
                         callbacks=[early,checkpoint,loss_graph],
                         batch_size = 32,
                         validation_split = 0.1)
@@ -92,7 +92,8 @@ class SupervisedValueNetworkAgent:
     self.sup_v_network.load_weights('./valueNetworkWeights/sup/old_good/sup_weights.04-0.92093.hdf5')
     self.datagen = pickle.load( open( "./valueNetworkWeights/sup/old_good/datagen.p" ) )
     """
-    self.sup_v_network.load_weights('./valueNetworkWeights/sup/sup_weights.17-0.91537.hdf5')
+    self.sup_v_network.load_weights(\
+          './valueNetworkWeights/sup/sup_weights.13-0.52265.hdf5')
     self.datagen = pickle.load( open( "./valueNetworkWeights/sup/datagen.p" ) )
     mock_s = np.zeros((1,144,144,3))
     self.predict_value(mock_s)
@@ -104,7 +105,7 @@ class SupervisedValueNetworkAgent:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
 
     v= self.sup_v_network.predict(s)
-    print v
+    #print v
     return v
     
   

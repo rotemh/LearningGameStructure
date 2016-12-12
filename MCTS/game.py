@@ -515,7 +515,7 @@ class Node(object):
     A class that represents nodes in the MCTS tree.
     """
 
-    def __init__(self, board, action=None, parent=None, heuristic=None):
+    def __init__(self, board, action=None, parent=None, heuristic=None,v_network_weight=0.0):
         """
         Create new node.
 
@@ -530,10 +530,13 @@ class Node(object):
         self.parent = parent
         self.children = [] # children nodes
         self.num_visits = 0 # number of times node has been visited
+        self.v_network_weight = v_network_weight
         if heuristic == None:
+            self.v = 0.0
             self.q = 0.0
         else:
-            self.q = heuristic(board)
+            self.v = heuristic(board)
+            self.q = 0.0
         self.heuristic = heuristic
         
     def get_action(self):
@@ -626,7 +629,7 @@ class Node(object):
         exploitation_value = self.q / self.num_visits
         exploration_value = c * math.sqrt(2 * math.log(self.parent.num_visits) / self.num_visits)
         
-        return exploitation_value + exploration_value
+        return self.v_network_weight * self.v + (1-self.v_network_weight)*(exploitation_value + exploration_value)
 
 
 class Simulation(object):
@@ -641,7 +644,7 @@ class Simulation(object):
         self.players = players # players[0] is always red player?
         self.history = []
 
-    def run(self, visualize=False, json_visualize=False, state_action_history=False, testing=False):
+    def run(self, visualize=False, json_visualize=False, state_action_history=False, turn_winning_to_red = False):
         self.game_id = str(random.randint(0,3133337))
 
         tmp_history = [] #player id conscious        
@@ -665,7 +668,8 @@ class Simulation(object):
         boardClass = self.board.__class__
         replay_board = boardClass()
         #TODO: For value network, always predict the value of red player, but he does not always win.
-        if (ConnectFourBoard.RED_ID != winner) and (not testing): # winner must be RED
+        if (ConnectFourBoard.RED_ID != winner) and turn_winning_to_red: # winner must be RED
+            print 'switching winner to red'
             switchColor  = lambda x: ConnectFourBoard.RED if x == ConnectFourBoard.BLACK else ConnectFourBoard.BLACK
             switchPlayerID = lambda x: 1 if x == 0 else 0
             tmp_history = [(switchPlayerID(p), ConnectFourAction(switchColor(a.color), a.col, a.row)) for (p, a) in tmp_history]

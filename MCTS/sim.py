@@ -42,10 +42,10 @@ def generate_custom_vs_uct_game(player1,uct_time_limit=1.0):
     player2 = game.ComputerPlayer('mcts', mcts.uct, uct_time_limit)
 
     sim = game.Simulation(board, player1, player2)
-    result = sim.run(visualize=False,state_action_history=False, testing = True)
+    result = sim.run(visualize=False,state_action_history=False)
     return result
 
-def generate_uct_game(time_limit=1.0):
+def generate_uct_game(time_limit=1.0,turn_winning_to_red=False):
     # The higher the time_limit, the better the players will perform
     board = game.ConnectFourBoard()
     player_1 = game.ComputerPlayer('mcts', mcts.uct, time_limit)
@@ -53,7 +53,7 @@ def generate_uct_game(time_limit=1.0):
 
     #ComputerPlayer -> choose_action ->self.aglo(board) -> returns the action
     sim = game.Simulation(board, player_1, player_2)
-    history = sim.run(visualize=False,state_action_history=True)
+    history = sim.run(visualize=False,state_action_history=True,turn_winning_to_red=False)
     return history
 
 def generate_custom_policy_game(algo_1, algo_2):

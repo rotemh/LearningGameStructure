@@ -6,6 +6,7 @@ from keras.utils import np_utils
 from keras import backend as K
 from keras.callbacks import *
 from keras.preprocessing.image import ImageDataGenerator
+from keras.optimizers import *
 from RL.LossGrapher import LossGrapher
 
 import os
@@ -22,7 +23,7 @@ class SupervisedPolicyAgent:
 
   def create_supervised_policy_model(self):
     conv_init = 'lecun_uniform'
-    dense_init = 'glorot_normal'
+    dense_init = 'he_uniform'
     s_img = Input( shape=self.img_shape,name='s_img',dtype='float32')
     kernel_size = 4
 
@@ -56,8 +57,9 @@ class SupervisedPolicyAgent:
                             init=dense_init)(sup_network_merge)
     V = sup_network_a
     self.sup_policy = Model(input =s_img,output=V)
+    opt = Adadelta(lr=2)
     self.sup_policy.compile(loss='categorical_crossentropy',
-                            optimizer='adadelta',
+                            optimizer=opt,
                             metrics =['accuracy']
                             )
 
@@ -125,20 +127,20 @@ class SupervisedPolicyAgent:
     early = EarlyStopping(monitor='val_loss', patience=20000, verbose=0, mode='auto')
     state = self.datagen.standardize(state)
     checkpoint = ModelCheckpoint(filepath=\
-                                './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
-                                  monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
+      './policyWeights/sup/sup_weights.{epoch:02d}-{val_acc:.5f}.hdf5',\
+      monitor='val_acc', verbose=0, save_best_only=True, mode='auto')
     loss_graph = LossGrapher()
     history = self.sup_policy.fit([state],action,nb_epoch=10000,
                           callbacks=[early,checkpoint,loss_graph],
-                          batch_size = 32,
+                          batch_size = 256,
                           validation_split = 0.1)
   def load_train_results(self):
     """
     self.sup_policy.load_weights('./policyWeights/sup/sup_weights.22-0.38204.hdf5')
     self.datagen = pickle.load( open( './datagen_0.38.p', "rb" ) )
     """
-    self.sup_policy.load_weights('./policyWeights/sup/sup_weights.28-0.42551.hdf5')
-    self.datagen = pickle.load( open( './policyWeights/sup/datagen.p', "rb" ) )
+    self.sup_policy.load_weights('./policyWeights/sup/50000_4_kernel/sup_weights.28-0.42551.hdf5')
+    self.datagen = pickle.load( open( './policyWeights/sup/50000_4_kernel/datagen.p', "rb" ) )
     mock_s = np.zeros((1,144,144,3))
     self.predict_action(mock_s)
   
@@ -154,7 +156,6 @@ class SupervisedPolicyAgent:
     if len(np.shape(s)) == 3:
       s = s.reshape((1,np.shape(s)[0],np.shape(s)[1],np.shape(s)[2]))
     action_prob = self.sup_policy.predict(s)
-    print action_prob
     if np.shape(s)[0] == 1:
       return action_prob[0]
     else:
