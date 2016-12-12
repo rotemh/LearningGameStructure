@@ -57,14 +57,15 @@ def main():
     q.join()
   else:
     print 'generating value network data'
-#    rl_agent = SupervisedPolicyAgent((144,144,3),7)
-#    rl_agent.load_train_results()  
-#    rl_player = game.PolicyPlayer('algo_1', rl_agent)
-    rl_player=[]
+    for t in xrange(8):
+      t = Thread(target=worker_v, args=(q,))
+      t.setDaemon(True)
+      t.start()
+      
+    for i in xrange(313,num_of_episodes):
+      q.put(i)
     
-    for i in xrange(1,num_of_episodes):
-      print 'generating episode = ' + str(i)
-      generate_v_training_data(i,rl_player)
+    q.join()
 
 
 if __name__ == '__main__':

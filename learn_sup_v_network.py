@@ -35,33 +35,40 @@ def load_supervised_training_data( train_dir ):
           continue 
         if data[-1]['terminal_board']:
           # value = end reward
-          if red_won - black_won > 10:
+          if red_won - black_won > 100:
             continue
-          print 'red won'
-          print data[-1]['reward']
-          red_won += 1
+          #print 'red won'
+          #print data[-1]['reward']
+          if (data[-1]['reward'])[0] != (data[-1]['reward']):
+            red_won += 1
           value.append(data[-1]['reward'][0])
         
         else:
           assert(black[-1]['terminal_board'])
-          if black_won - red_won > 10:
+          if black_won - red_won > 100:
             continue
-          print 'black won'
-          print black[-1]['reward']
+          #print 'black won'
+          #print black[-1]['reward']
           black_won+=1
           value.append(black[-1]['reward'][0])
         s_data.append(data[i]['s_img'])
       if len(s_data) > 50000:
+        print black_won, red_won
         return np.asarray(s_data),np.asarray(value)
-    except ValueError:
+    except:
       print f + ' is corrupted'
+  print black_won, red_won
   return np.asarray(s_data),np.asarray(value)
 
 def main():
-  train_dataset_dir = '/home/beomjoon/LearningGameStructure/v_dataset/'
-  s_data,value = load_supervised_training_data(train_dataset_dir)
+#  train_dataset_dir = '/home/beomjoon/LearningGameStructure/mcts_v_dataset/'
+#  s_data,value = load_supervised_training_data(train_dataset_dir)
+  s_data = pickle.load(open('v_dataset_s.p'))
+  value = pickle.load(open('v_dataset_v.p'))
+  import pdb;pdb.set_trace()
   rl_agent = SupervisedValueNetworkAgent((144,144,3))
   rl_agent.update_v_network(s_data,value)
+  import pdb;pdb.set_trace()
 
 if __name__ == '__main__':
     main()

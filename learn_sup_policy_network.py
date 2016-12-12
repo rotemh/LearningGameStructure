@@ -53,7 +53,7 @@ def load_supervised_training_data( train_dir ):
           value.append(data[-1]['reward'][0])
         else:
           value.append(data[-1]['reward'][1])
-      if len(a) > 100000:
+      if len(a) > 50000:
         print len(a)
         return np.asarray(s_data),np.asarray(a),\
           np.asarray(player_id),np.asarray(reward),np.asarray(value),\
@@ -66,8 +66,11 @@ def load_supervised_training_data( train_dir ):
     np.asarray(s_board_data),np.asarray(sprime_board_data)
 
 def main():
-  train_dataset_dir = '/home/beomjoon/LearningGameStructure/dataset/'
-  s_data,a,player_id,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
+#  train_dataset_dir = '/home/beomjoon/LearningGameStructure/dataset/'
+#  s_data,a,_,_,_,_,_ = load_supervised_training_data(train_dataset_dir)
+  s_data = pickle.load(open('./p_dataset_s.p'))
+  a = pickle.load(open('./p_dataset_a.p'))
+  print 'loading complete'
   rl_agent = SupervisedPolicyAgent((144,144,3),7)
   rl_agent.update_supervised_policy(s_data,a)
 

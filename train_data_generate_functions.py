@@ -13,7 +13,7 @@ from RL.SupervisedPolicy import SupervisedPolicyAgent
 import pickle 
 
 def generate_policy_training_data(episode_num, time_limit=1, file_path='./dataset/'):
-  episode = generate_uct_game(time_limit)
+  episode = generate_uct_game(time_limit,turn_winning_to_red=True)
   if episode[-1]['terminal_board'] and (episode[-1]['reward'][0] is not episode[-1]['reward'][1]):
     win_player_id = np.argmax( episode[-1]['reward'] )
   else:
@@ -30,8 +30,8 @@ def generate_policy_training_data(episode_num, time_limit=1, file_path='./datase
                  'uct_time_limit':time_limit})
   return
 
-def generate_v_training_data(episode_num, rl_player,time_limit=0.05, file_path='./mcts_v_dataset/'):
-  episode = generate_uct_game(time_limit=0.5)
+def generate_v_training_data(episode_num, time_limit=0.05, file_path='./mcts_v_dataset/'):
+  episode = generate_uct_game(time_limit=0.5,turn_winning_to_red=False)
   
   # get each player's data
   red_player_id = 0

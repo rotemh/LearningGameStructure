@@ -56,10 +56,10 @@ def uct_timed(board, time_limit):
         
     return best_child(root, 0).get_action()
 
-def uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic):
+def uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic,v_network_weight):
     # record start time
     start_time = time.time()
-    root = Node(board, None, None, uct_heuristic)
+    root = Node(board, None, None, uct_heuristic,v_network_weight)
     c = 1 # exploration constant
     
     while time.time() - start_time < time_limit:
@@ -106,7 +106,7 @@ def expand(node):
             break
     
     new_board = action.apply(board)
-    child = Node(new_board, action, node, node.get_heuristic())
+    child = Node(new_board, action, node, node.get_heuristic(), node.v_network_weight)
     node.add_child(child)
     return child
 

@@ -19,11 +19,11 @@ class AMCTSPlayer(ComputerPlayer):
   search tree.
   """
 
-  def __init__(self, name, time_limit, policy_agent = None, value_agent = None, rollout_randomness=0.3, value_prescaling=5.):
+  def __init__(self, name, time_limit, policy_agent = None, value_agent = None, rollout_randomness=0.3, v_network_weight=0.5):
     self.policy_agent = policy_agent
     self.value_agent = value_agent
     self.rollout_randomness = rollout_randomness # % of the time rollout step is random, vs. policy based
-    self.value_prescaling = value_prescaling # Multiplies the strength of the value-agent prediction
+    self.v_network_weight = v_network_weight # Multiplies the strength of the value-agent prediction
     ComputerPlayer.__init__(self, name, self.amcts_algo(), time_limit)
 
   def amcts_algo(self):
@@ -31,23 +31,23 @@ class AMCTSPlayer(ComputerPlayer):
       if self.value_agent == None:
         return 0
 
-      board_image = board.visualize_image()
-      return self.value_prescaling*self.value_agent.predict_value(board_image)
+      board_image = board.visualize_image(makeCurrPlayerRed=True)
+      return self.value_agent.predict_value(board_image)
   
     def default_heuristic(board):
       actions = board.get_legal_actions()
 
-      if self.policy_agent == None or np.random.rand() < np.rollout_randomness:      
+      if self.policy_agent == None or np.random.rand() < self.rollout_randomness:      
         action = np.random.choice(list(actions))
         return action
 
-      board_image = board.visualize_image()
+      board_image = board.visualize_image(makeCurrPlayerRed=True)
       column_prob_dist = self.policy_agent.predict_action(board_image)
       legal_column_prob_dist = [column_prob_dist[action.col] for action in actions]
       action_idx = np.argmax(legal_column_prob_dist)
       return actions[action_idx]
 
-    algo = lambda board, time_limit: uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic)
+    algo = lambda board, time_limit: uct_with_heuristics(board, time_limit, uct_heuristic, default_heuristic, self.v_network_weight)
     return algo
 
 
